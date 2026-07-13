@@ -19,8 +19,10 @@ def create_server() -> FastMCP:
     """Initialize FastMCP application and register tools."""
     logger = get_mcp_logger()
     logger.info("Initializing MCP server.")
+    host = os.getenv("MCP_SERVER_HOST", "0.0.0.0")
+    port = int(os.getenv("MCP_SERVER_PORT", "8000"))
 
-    mcp = FastMCP("rag-telegram-bot")
+    mcp = FastMCP("rag-telegram-bot", host=host, port=port, sse_path="/sse")
 
     @mcp.tool(
         name="search_docs",
@@ -53,11 +55,7 @@ def main() -> None:
     host = os.getenv("MCP_SERVER_HOST", "0.0.0.0")
     port = int(os.getenv("MCP_SERVER_PORT", "8000"))
     logger.info("Starting MCP SSE server on %s:%s.", host, port)
-    try:
-        server.run(transport="sse", host=host, port=port)
-    except TypeError:
-        # Compatibility fallback for MCP SDK versions with positional host/port support.
-        server.run("sse", host=host, port=port)
+    server.run(transport="sse")
 
 
 if __name__ == "__main__":
