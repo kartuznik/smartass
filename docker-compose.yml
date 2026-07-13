@@ -1,10 +1,12 @@
-# Will be fully implemented in Stage 6.
 services:
   bot:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     command: ["python", "-m", "bot.main"]
     env_file:
       - .env
     volumes:
       - ./data:/app/data
       - ./docs:/app/docs
+    restart: unless-stopped

@@ -1,43 +1,86 @@
 # RAG Telegram Bot
 
-Production-oriented Telegram bot with RAG (Retrieval-Augmented Generation),
-ChromaDB vector store, and MCP server integration.
+Telegram-бот для вопросов по загруженным PDF/Markdown документам с RAG-поиском, ChromaDB и MCP-сервером для Claude/Cursor.
 
-## Stage 1 Status
+## ⚙️ Настройка окружения
 
-Completed:
+1. Скопируйте шаблон переменных:
 
-- Project structure scaffolded
-- Environment configuration template added
-- Typed settings loader via `pydantic-settings`
-- Logging setup with rotating file logs
-- Base data models (`Document`, `Chunk`, `QueryResult`)
+```bash
+cp .env.example .env
+```
 
-## Quick Start (local)
+2. Заполните в `.env` минимум:
+- `TELEGRAM_BOT_TOKEN`
+- `OPENAI_API_KEY`
 
-1. Copy environment template:
+По умолчанию бот хранит данные в:
+- `data/chroma_db` — база поиска по документам
+- `docs` — загруженные файлы
 
-   ```bash
-   cp .env.example .env
-   ```
+## 🚀 Быстрый старт с Docker
 
-2. Install dependencies:
+Запуск бота:
 
-   ```bash
-   python3 -m venv .venv
-   source .venv/bin/activate
-   pip install -r requirements.txt
-   ```
+```bash
+docker compose up -d --build
+```
 
-3. Fill required values in `.env`:
-   - `TELEGRAM_BOT_TOKEN`
-   - `OPENAI_API_KEY`
+Проверка логов:
 
-## Planned Next Stages
+```bash
+docker compose logs -f bot
+```
 
-- Document processing (PDF/Markdown + chunking)
-- ChromaDB integration and retrieval
-- RAG answer generation
-- aiogram handlers and dialog context
-- MCP server tools
-- Docker deployment and tests
+Остановка:
+
+```bash
+docker compose down
+```
+
+## 🔌 Интеграция MCP
+
+MCP-сервер запускается через stdio:
+
+```bash
+python3 -m mcp_server.server
+```
+
+Пример блока для `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "rag-telegram-bot": {
+      "command": "python3",
+      "args": ["-m", "mcp_server.server"],
+      "cwd": "/absolute/path/to/rag-telegram-bot"
+    }
+  }
+}
+```
+
+Для Cursor добавьте MCP-сервер с той же командой запуска:
+- command: `python3`
+- args: `-m mcp_server.server`
+- cwd: абсолютный путь к проекту
+
+Доступные MCP-инструменты:
+- `search_docs(query, top_k=3)`
+- `list_documents()`
+- `get_document_info(document_id)`
+
+## 🛠 Локальная разработка
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python3 -m bot.main
+```
+
+Ручная проверка RAG без Telegram:
+
+```bash
+python3 tests/test_rag_manual.py
+```
