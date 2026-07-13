@@ -9,6 +9,7 @@ services:
     volumes:
       - ./data:/app/data
       - ./docs:/app/docs
+      - ./logs:/app/logs
     restart: unless-stopped
 
   mcp:
@@ -25,7 +26,7 @@ services:
       - ./data:/app/data
       - ./docs:/app/docs
     ports:
-      - "8000:8000"
+      - "0.0.0.0:8000:8000"
     restart: unless-stopped
     depends_on:
       - bot

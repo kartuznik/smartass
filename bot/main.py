@@ -13,8 +13,40 @@ from bot.handlers.commands import get_bot_commands
 from bot.handlers.commands import router as commands_router
 from bot.handlers.documents import router as documents_router
 from bot.handlers.queries import router as queries_router
+from bot.services.doctor import Doctor, set_doctor_instance
 from bot.utils.config import get_settings
 from bot.utils.logger import configure_logging
+
+
+async def health_check_loop(doctor: Doctor) -> None:
+    """Run periodic health checks and notify admins on critical failures."""
+    logger = logging.getLogger(__name__)
+    while True:
+        try:
+            db_ok = await doctor.check_database()
+            disk_ok, disk_message, _ = doctor.check_disk_space()
+            logger.info(
+                "Health check: db_ok=%s, disk_ok=%s, disk_free=%s",
+                db_ok,
+                disk_ok,
+                disk_message,
+            )
+
+            if not db_ok:
+                await doctor.notify_admin("🔴 Критично: не удалось восстановить подключение к базе данных.")
+            if not disk_ok:
+                await doctor.notify_admin(
+                    f"🔴 Критично: свободное место на диске ниже порога: {disk_message} (<10%)."
+                )
+
+            await asyncio.sleep(300)
+        except asyncio.CancelledError:
+            logger.info("Health check loop cancelled.")
+            raise
+        except Exception as exc:  # pragma: no cover - defensive runtime guard
+            logger.exception("Health check loop failed: %s", exc)
+            await doctor.notify_admin(f"🔴 Ошибка health-check цикла: {exc}")
+            await asyncio.sleep(30)
 
 
 async def run_bot() -> None:
@@ -27,6 +59,9 @@ async def run_bot() -> None:
         token=settings.telegram_bot_token,
         default=DefaultBotProperties(parse_mode=ParseMode.MARKDOWN),
     )
+    doctor = Doctor(settings=settings, bot=bot)
+    set_doctor_instance(doctor)
+
     dp = Dispatcher()
 
     dp.include_router(commands_router)
@@ -35,10 +70,16 @@ async def run_bot() -> None:
 
     await bot.set_my_commands(get_bot_commands())
     logger.info("Bot commands registered.")
+    health_task = asyncio.create_task(health_check_loop(doctor))
 
     try:
         await dp.start_polling(bot)
     finally:
+        health_task.cancel()
+        try:
+            await health_task
+        except asyncio.CancelledError:
+            logger.info("Health check task stopped.")
         await bot.session.close()
 
 
