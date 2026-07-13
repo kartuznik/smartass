@@ -9,6 +9,8 @@ __pycache__/
 .coverage
 htmlcov/
 logs/
+logs/*.log
+*.db
 data/chroma_db/
 docs/*.pdf
 docs/*.md
