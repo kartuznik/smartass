@@ -23,10 +23,11 @@ EMPTY_CONTEXT_MESSAGE = (
 SYSTEM_PROMPT_TEMPLATE = """Ты — полезный ассистент, отвечающий на вопросы строго по предоставленной документации.
 
 ПРАВИЛА:
-1. Используй ТОЛЬКО информацию из блока "КОНТЕКСТ".
-2. Если ответа в контексте нет, так и скажи: "В документации нет информации по этому вопросу".
-3. В конце ответа обязательно указывай источники в формате: "Источник: [Имя документа]".
-4. Отвечай на русском языке, сохраняя дружелюбный и профессиональный тон.
+1. Используй информацию из блока "КОНТЕКСТ" для ответа.
+2. Если контекст содержит фрагментарную или частичную информацию по вопросу, все равно используй ее для формирования ответа.
+3. Отвечай на основе контекста, но можешь дополнять общими знаниями, если это уместно.
+4. В конце ответа обязательно указывай источники в формате: "Источник: [Имя документа]".
+5. Отвечай на русском языке, сохраняя дружелюбный и профессиональный тон.
 
 КОНТЕКСТ:
 {context_text}
@@ -98,7 +99,14 @@ class RAGService:
             )
 
         generation_started_at = perf_counter()
-        logger.info("RAG generation started: query_length=%s, context_chunks=%s", len(query), len(context))
+        scores = [float(chunk.metadata.get("score", 0.0)) for chunk in context]
+        average_score = (sum(scores) / len(scores)) if scores else 0.0
+        logger.info(
+            "RAG generation started: query_length=%s, context_chunks=%s, avg_score=%.4f",
+            len(query),
+            len(context),
+            average_score,
+        )
 
         context_text = self._build_context_text(context)
         history_text = self._build_history_text(conversation_history or [])
@@ -149,11 +157,12 @@ class RAGService:
         for idx, chunk in enumerate(context, start=1):
             score = float(chunk.metadata.get("score", 0.0))
             lines.append(
+                f"[Источник: {chunk.document_id}]\n"
                 f"[{idx}] Документ: {chunk.source_filename}; "
-                f"DocumentID: {chunk.document_id}; ChunkID: {chunk.id}; Score: {score:.4f}\n"
+                f"ChunkID: {chunk.id}; Score: {score:.4f}\n"
                 f"{chunk.text}"
             )
-        return "\n\n".join(lines)
+        return "\n---\n".join(lines)
 
     def _build_history_text(self, conversation_history: list[dict[str, str]]) -> str:
         """Format recent dialog history in compact readable form."""

@@ -40,7 +40,7 @@ class Settings(BaseSettings):
 
     embedding_model: str = Field("text-embedding-3-small", alias="EMBEDDING_MODEL")
     llm_model: str = Field("gpt-4o-mini", alias="LLM_MODEL")
-    default_top_k: int = Field(3, alias="DEFAULT_TOP_K", ge=1, le=20)
+    default_top_k: int = Field(5, alias="DEFAULT_TOP_K", ge=1, le=20)
     chunk_size_tokens: int = Field(500, alias="CHUNK_SIZE_TOKENS", ge=100, le=4000)
     chunk_overlap_tokens: int = Field(50, alias="CHUNK_OVERLAP_TOKENS", ge=0, le=500)
     max_history_messages: int = Field(10, alias="MAX_HISTORY_MESSAGES", ge=1, le=50)
