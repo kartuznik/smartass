@@ -11,6 +11,8 @@ services:
       - ./data/bot_memory.db:/app/data/bot_memory.db
       - ./docs:/app/docs
       - ./logs:/app/logs
+    ports:
+      - "8001:8001"
     restart: unless-stopped
 
   mcp:
@@ -28,6 +30,7 @@ services:
       - ./docs:/app/docs
     ports:
       - "0.0.0.0:8000:8000"
+      - "8002:8001"
     restart: unless-stopped
     depends_on:
       - bot

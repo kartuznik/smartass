@@ -8,6 +8,7 @@ import logging
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
+from prometheus_client import start_http_server
 
 from bot.handlers.commands import get_bot_commands
 from bot.handlers.commands import router as commands_router
@@ -54,6 +55,8 @@ async def run_bot() -> None:
     settings = get_settings()
     logger = configure_logging(settings)
     logger.info("Starting RAG Telegram Bot (env=%s)", settings.app_env)
+    start_http_server(8001)
+    logger.info("Prometheus metrics server started on 0.0.0.0:8001")
 
     bot = Bot(
         token=settings.telegram_bot_token,

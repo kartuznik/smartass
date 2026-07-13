@@ -5,6 +5,8 @@ from __future__ import annotations
 import os
 from typing import Any
 
+from prometheus_client import start_http_server
+
 from mcp_server.config import get_mcp_logger
 from mcp_server.tools import get_document_info, list_documents, search_docs
 
@@ -52,6 +54,8 @@ def create_server() -> FastMCP:
 def main() -> None:
     """Entrypoint for running MCP server over SSE transport."""
     logger = get_mcp_logger()
+    start_http_server(8001)
+    logger.info("Prometheus metrics server started on 0.0.0.0:8001")
     server = create_server()
     host = os.getenv("MCP_SERVER_HOST", "0.0.0.0")
     port = int(os.getenv("MCP_SERVER_PORT", "8000"))

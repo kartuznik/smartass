@@ -10,6 +10,7 @@ from aiogram.types import Message
 
 from bot.models.document import Source
 from bot.services.memory import ConversationMemory
+from bot.services.metrics import rag_queries_total, rag_query_duration_seconds, track_active_user
 from bot.services.rag import RAGService
 from bot.utils.config import get_settings
 
@@ -43,19 +44,22 @@ async def query_message_handler(message: Message) -> None:
     try:
         await _memory.add_message(user_id=user_id, role="user", content=query)
         history = await _memory.get_history(user_id)
+        track_active_user(user_id)
 
-        context = await _rag_service.search(
-            query=query,
-            top_k=_settings.default_top_k,
-            user_id=user_id,
-        )
-        answer_result = await _rag_service.generate_answer(
-            query=query,
-            context=context,
-            conversation_history=history,
-        )
+        with rag_query_duration_seconds.time():
+            context = await _rag_service.search(
+                query=query,
+                top_k=_settings.default_top_k,
+                user_id=user_id,
+            )
+            answer_result = await _rag_service.generate_answer(
+                query=query,
+                context=context,
+                conversation_history=history,
+            )
 
         await _memory.add_message(user_id=user_id, role="assistant", content=answer_result.answer)
+        rag_queries_total.inc()
         await message.answer(_format_answer(answer_result.answer, answer_result.found, answer_result.sources))
     except Exception as exc:  # pragma: no cover - defensive runtime guard
         logger.exception("RAG pipeline failed for user_id=%s: %s", user_id, exc)

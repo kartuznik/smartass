@@ -7,8 +7,10 @@ import time
 from pathlib import Path
 from typing import Any, Callable
 
+import aiosqlite
 from aiogram import Bot
 
+from bot.services.metrics import set_active_users, set_documents_indexed
 from bot.services.vector_store import VectorStore
 from bot.utils.config import Settings
 
@@ -76,6 +78,10 @@ class Doctor:
         disk_ok, disk_message, _ = self.check_disk_space()
         uptime_seconds = int(time.time() - self.started_at)
         uptime = self._format_uptime(uptime_seconds)
+        documents_count = len(await self.vector_store.list_documents(user_id=0))
+        active_users_count = await self._count_active_users_24h()
+        set_documents_indexed(documents_count)
+        set_active_users(active_users_count)
 
         errors = "\n".join(f"- {item}" for item in self.last_errors[-5:]) if self.last_errors else "None"
         db_label = "Connected" if db_ok else self.db_status
@@ -84,6 +90,8 @@ class Doctor:
             f"🟢 Bot Uptime: {uptime}\n"
             f"{'🟢' if db_ok else '🔴'} DB Status: {db_label}\n"
             f"{'🟢' if disk_ok else '🔴'} Disk Space: {disk_message}\n"
+            f"🟢 Documents Indexed: {documents_count}\n"
+            f"🟢 Active Users (24h): {active_users_count}\n"
             f"{'🔴' if self.last_errors else '🟢'} Errors: {errors}"
         )
 
@@ -108,6 +116,23 @@ class Doctor:
         import asyncio
 
         return await asyncio.to_thread(func)
+
+    async def _count_active_users_24h(self) -> int:
+        """Count unique users with messages in last 24 hours."""
+        db_path = Path(self.settings.data_dir) / "bot_memory.db"
+        if not db_path.exists():
+            return 0
+
+        async with aiosqlite.connect(str(db_path)) as db:
+            cursor = await db.execute(
+                """
+                SELECT COUNT(DISTINCT user_id)
+                FROM chat_history
+                WHERE timestamp >= datetime('now', '-1 day')
+                """
+            )
+            row = await cursor.fetchone()
+        return int(row[0] or 0)
 
     def _remember_error(self, error: str) -> None:
         """Keep bounded diagnostics error history."""
