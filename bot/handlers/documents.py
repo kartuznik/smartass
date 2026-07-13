@@ -98,7 +98,10 @@ async def handle_document_upload(message: Message) -> None:
 async def list_documents_handler(message: Message) -> None:
     """List all indexed documents from vector store."""
     try:
-        documents = await _vector_store.list_documents()
+        if message.from_user is None:
+            await message.answer("Не удалось определить пользователя.")
+            return
+        documents = await _vector_store.list_documents(user_id=message.from_user.id)
         if not documents:
             await message.answer("Список документов пуст.")
             return
@@ -125,7 +128,10 @@ async def delete_document_handler(message: Message) -> None:
 
     document_id = parts[1].strip()
     try:
-        deleted = await _vector_store.delete_document(document_id)
+        if message.from_user is None:
+            await message.answer("Не удалось определить пользователя.")
+            return
+        deleted = await _vector_store.delete_document(document_id, user_id=message.from_user.id)
         if deleted == 0:
             await message.answer(f"Документ `{document_id}` не найден.")
             return

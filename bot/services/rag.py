@@ -48,7 +48,7 @@ class RAGService:
         self.vector_store = vector_store or VectorStore(settings)
         self._openai = AsyncOpenAI(api_key=settings.openai_api_key)
 
-    async def search(self, query: str, top_k: int = 3) -> list[Chunk]:
+    async def search(self, query: str, top_k: int = 3, user_id: int | None = None) -> list[Chunk]:
         """Search relevant chunks and return them as Chunk objects with score metadata."""
         search_started_at = perf_counter()
         normalized_query = query.strip()
@@ -59,7 +59,11 @@ class RAGService:
         limit = top_k if top_k > 0 else self.settings.default_top_k
         logger.info("RAG search started: query_length=%s, top_k=%s", len(normalized_query), limit)
 
-        query_results = await self.vector_store.search_similar(normalized_query, top_k=limit)
+        query_results = await self.vector_store.search_similar(
+            normalized_query,
+            top_k=limit,
+            user_id=user_id,
+        )
         chunks: list[Chunk] = []
         for item in query_results:
             chunk_metadata = dict(item.metadata)

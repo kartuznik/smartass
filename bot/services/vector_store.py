@@ -47,7 +47,12 @@ class VectorStore:
         )
         return len(chunks)
 
-    async def search_similar(self, query: str, top_k: int | None = None) -> list[QueryResult]:
+    async def search_similar(
+        self,
+        query: str,
+        top_k: int | None = None,
+        user_id: int | None = None,
+    ) -> list[QueryResult]:
         """Return top-k semantically similar chunks."""
         if not query.strip():
             return []
@@ -55,12 +60,15 @@ class VectorStore:
         n_results = top_k or self.settings.default_top_k
         query_embedding = (await self._embed_texts([query]))[0]
 
-        query_result = await asyncio.to_thread(
-            self._collection.query,
-            query_embeddings=[query_embedding],
-            n_results=n_results,
-            include=["documents", "metadatas", "distances"],
-        )
+        query_kwargs: dict[str, Any] = {
+            "query_embeddings": [query_embedding],
+            "n_results": n_results,
+            "include": ["documents", "metadatas", "distances"],
+        }
+        if user_id is not None and user_id != 0:
+            query_kwargs["where"] = {"user_id": user_id}
+
+        query_result = await asyncio.to_thread(self._collection.query, **query_kwargs)
 
         documents = query_result.get("documents", [[]])[0]
         metadatas = query_result.get("metadatas", [[]])[0]
@@ -86,11 +94,14 @@ class VectorStore:
 
         return results
 
-    async def delete_document(self, document_id: str) -> int:
+    async def delete_document(self, document_id: str, user_id: int | None = None) -> int:
         """Delete all chunks belonging to a document id."""
+        where_filter: dict[str, Any] = {"document_id": document_id}
+        if user_id is not None and user_id != 0:
+            where_filter["user_id"] = user_id
         existing = await asyncio.to_thread(
             self._collection.get,
-            where={"document_id": document_id},
+            where=where_filter,
             include=[],
         )
         chunk_ids = existing.get("ids", [])
@@ -100,12 +111,13 @@ class VectorStore:
         await asyncio.to_thread(self._collection.delete, ids=chunk_ids)
         return len(chunk_ids)
 
-    async def list_documents(self) -> list[dict[str, Any]]:
+    async def list_documents(self, user_id: int | None = None) -> list[dict[str, Any]]:
         """List unique uploaded documents inferred from chunk metadata."""
-        payload = await asyncio.to_thread(
-            self._collection.get,
-            include=["metadatas"],
-        )
+        get_kwargs: dict[str, Any] = {"include": ["metadatas"]}
+        if user_id is not None and user_id != 0:
+            get_kwargs["where"] = {"user_id": user_id}
+
+        payload = await asyncio.to_thread(self._collection.get, **get_kwargs)
         metadatas = payload.get("metadatas", [])
 
         by_document: dict[str, dict[str, Any]] = {}
@@ -131,15 +143,26 @@ class VectorStore:
             reverse=True,
         )
 
-    async def count_chunks(self) -> int:
+    async def count_chunks(self, user_id: int | None = None) -> int:
         """Return total chunks in collection."""
-        return await asyncio.to_thread(self._collection.count)
-
-    async def get_document_info(self, document_id: str) -> dict[str, Any] | None:
-        """Return aggregated metadata for a document by id."""
+        if user_id is None or user_id == 0:
+            return await asyncio.to_thread(self._collection.count)
         payload = await asyncio.to_thread(
             self._collection.get,
-            where={"document_id": document_id},
+            where={"user_id": user_id},
+            include=[],
+        )
+        return len(payload.get("ids", []))
+
+    async def get_document_info(self, document_id: str, user_id: int | None = None) -> dict[str, Any] | None:
+        """Return aggregated metadata for a document by id."""
+        where_filter: dict[str, Any] = {"document_id": document_id}
+        if user_id is not None and user_id != 0:
+            where_filter["user_id"] = user_id
+
+        payload = await asyncio.to_thread(
+            self._collection.get,
+            where=where_filter,
             include=["metadatas"],
         )
         chunk_ids = payload.get("ids", [])
@@ -173,6 +196,7 @@ class VectorStore:
             "source_filename": chunk.source_filename,
             "chunk_index": chunk.chunk_index,
             "token_count": chunk.token_count,
+            "user_id": document.uploaded_by,
             "uploaded_by": document.uploaded_by,
             "uploaded_at": document.uploaded_at.isoformat(),
         }

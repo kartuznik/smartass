@@ -60,9 +60,12 @@ async def help_command_handler(message: Message) -> None:
 async def stats_command_handler(message: Message) -> None:
     """Show amount of indexed documents and chunks."""
     try:
+        if message.from_user is None:
+            await message.answer("Не удалось определить пользователя.")
+            return
         vector_store = get_vector_store()
-        documents = await vector_store.list_documents()
-        chunks_count = await vector_store.count_chunks()
+        documents = await vector_store.list_documents(user_id=message.from_user.id)
+        chunks_count = await vector_store.count_chunks(user_id=message.from_user.id)
 
         await message.answer(
             "Текущая статистика:\n"

@@ -6,6 +6,8 @@ from typing import Any
 
 from mcp_server.config import get_mcp_logger, get_rag_service, get_vector_store
 
+ADMIN_USER_ID = 0
+
 
 def _format_sources_markdown(sources: list[Any]) -> str:
     """Render sources section in readable markdown."""
@@ -28,7 +30,7 @@ async def search_docs(query: str, top_k: int = 3) -> str:
 
     try:
         logger.info("MCP search_docs called: query_length=%s top_k=%s", len(query), effective_top_k)
-        context = await rag_service.search(query=query, top_k=effective_top_k)
+        context = await rag_service.search(query=query, top_k=effective_top_k, user_id=ADMIN_USER_ID)
         answer_result = await rag_service.generate_answer(
             query=query,
             context=context,
@@ -58,7 +60,7 @@ async def list_documents(payload: dict[str, Any] | None = None) -> str:
 
     try:
         logger.info("MCP list_documents called")
-        documents = await vector_store.list_documents()
+        documents = await vector_store.list_documents(user_id=ADMIN_USER_ID)
         if not documents:
             return "Документы пока не загружены."
 
@@ -83,7 +85,7 @@ async def get_document_info(document_id: str) -> str:
 
     try:
         logger.info("MCP get_document_info called: document_id=%s", document_id)
-        info = await vector_store.get_document_info(document_id)
+        info = await vector_store.get_document_info(document_id, user_id=ADMIN_USER_ID)
         if not info:
             return f"Документ `{document_id}` не найден."
 

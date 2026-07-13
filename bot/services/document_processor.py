@@ -128,6 +128,7 @@ class DocumentProcessor:
                         token_count=len(token_slice),
                         source_filename=document.filename,
                         metadata={
+                            "user_id": document.uploaded_by,
                             "start_token": start,
                             "end_token": end,
                         },

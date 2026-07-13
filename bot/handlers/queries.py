@@ -18,7 +18,10 @@ logger = logging.getLogger(__name__)
 
 _settings = get_settings()
 _history_limit = min(7, _settings.max_history_messages)
-_memory = ConversationMemory(max_messages=_history_limit)
+_memory = ConversationMemory(
+    db_path=f"{_settings.data_dir}/bot_memory.db",
+    max_messages=_history_limit,
+)
 _rag_service = RAGService(settings=_settings)
 
 
@@ -38,12 +41,13 @@ async def query_message_handler(message: Message) -> None:
     await bot.send_chat_action(chat_id=message.chat.id, action="typing")
 
     try:
-        _memory.add(user_id=user_id, role="user", content=query)
-        history = _memory.get(user_id)
+        await _memory.add_message(user_id=user_id, role="user", content=query)
+        history = await _memory.get_history(user_id)
 
         context = await _rag_service.search(
             query=query,
             top_k=_settings.default_top_k,
+            user_id=user_id,
         )
         answer_result = await _rag_service.generate_answer(
             query=query,
@@ -51,7 +55,7 @@ async def query_message_handler(message: Message) -> None:
             conversation_history=history,
         )
 
-        _memory.add(user_id=user_id, role="assistant", content=answer_result.answer)
+        await _memory.add_message(user_id=user_id, role="assistant", content=answer_result.answer)
         await message.answer(_format_answer(answer_result.answer, answer_result.found, answer_result.sources))
     except Exception as exc:  # pragma: no cover - defensive runtime guard
         logger.exception("RAG pipeline failed for user_id=%s: %s", user_id, exc)
