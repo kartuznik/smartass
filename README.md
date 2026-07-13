@@ -40,30 +40,35 @@ docker compose down
 
 ## 🔌 Интеграция MCP
 
-MCP-сервер запускается через stdio:
+MCP-сервер запускается как HTTP(SSE) сервис на VPS:
 
 ```bash
-python3 -m mcp_server.server
+docker compose up -d --build mcp
 ```
 
-Пример блока для `claude_desktop_config.json`:
+По умолчанию он слушает `0.0.0.0:8000`, а SSE endpoint доступен по URL:
+
+```text
+http://YOUR_VPS_IP:8000/sse
+```
+
+Пример настройки MCP для Cursor:
 
 ```json
 {
   "mcpServers": {
-    "rag-telegram-bot": {
-      "command": "python3",
-      "args": ["-m", "mcp_server.server"],
-      "cwd": "/absolute/path/to/rag-telegram-bot"
+    "smartass-rag": {
+      "url": "http://YOUR_VPS_IP:8000/sse"
     }
   }
 }
 ```
 
-Для Cursor добавьте MCP-сервер с той же командой запуска:
-- command: `python3`
-- args: `-m mcp_server.server`
-- cwd: абсолютный путь к проекту
+Если запускаете без Docker:
+
+```bash
+python3 -m mcp_server.server
+```
 
 Доступные MCP-инструменты:
 - `search_docs(query, top_k=3)`

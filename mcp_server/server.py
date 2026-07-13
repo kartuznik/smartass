@@ -1,6 +1,8 @@
-"""MCP stdio server exposing documentation RAG tools."""
+"""MCP SSE server exposing documentation RAG tools."""
 
 from __future__ import annotations
+
+import os
 
 from mcp_server.config import get_mcp_logger
 from mcp_server.tools import get_document_info, list_documents, search_docs
@@ -45,11 +47,17 @@ def create_server() -> FastMCP:
 
 
 def main() -> None:
-    """Entrypoint for running MCP server over stdio transport."""
+    """Entrypoint for running MCP server over SSE transport."""
     logger = get_mcp_logger()
     server = create_server()
-    logger.info("Starting MCP stdio server.")
-    server.run(transport="stdio")
+    host = os.getenv("MCP_SERVER_HOST", "0.0.0.0")
+    port = int(os.getenv("MCP_SERVER_PORT", "8000"))
+    logger.info("Starting MCP SSE server on %s:%s.", host, port)
+    try:
+        server.run(transport="sse", host=host, port=port)
+    except TypeError:
+        # Compatibility fallback for MCP SDK versions with positional host/port support.
+        server.run("sse", host=host, port=port)
 
 
 if __name__ == "__main__":
