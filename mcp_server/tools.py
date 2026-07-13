@@ -47,8 +47,12 @@ async def search_docs(query: str, top_k: int = 3) -> str:
         )
 
 
-async def list_documents() -> str:
-    """Return markdown table with all indexed documents."""
+async def list_documents(payload: dict[str, Any] | None = None) -> str:
+    """Return markdown table with all indexed documents.
+
+    Accepts and ignores optional payload to stay compatible with clients
+    that send empty arguments object or null-like payloads for no-arg tools.
+    """
     logger = get_mcp_logger()
     vector_store = get_vector_store()
 

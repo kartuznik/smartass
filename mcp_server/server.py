@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+from typing import Any
 
 from mcp_server.config import get_mcp_logger
 from mcp_server.tools import get_document_info, list_documents, search_docs
@@ -35,8 +36,8 @@ def create_server() -> FastMCP:
         name="list_documents",
         description="Список загруженных документов.",
     )
-    async def list_documents_tool() -> str:
-        return await list_documents()
+    async def list_documents_tool(payload: dict[str, Any] | None = None) -> str:
+        return await list_documents(payload=payload)
 
     @mcp.tool(
         name="get_document_info",
