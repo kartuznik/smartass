@@ -1,0 +1,71 @@
+"""General command handlers: start/help/stats and bot command menu."""
+
+from __future__ import annotations
+
+import logging
+
+from aiogram import Router
+from aiogram.filters import Command
+from aiogram.types import BotCommand, Message
+
+from bot.handlers.documents import get_vector_store
+
+router = Router(name="commands")
+logger = logging.getLogger(__name__)
+
+
+def get_bot_commands() -> list[BotCommand]:
+    """Return command list for Telegram command menu."""
+    return [
+        BotCommand(command="start", description="Запуск бота"),
+        BotCommand(command="help", description="Помощь по командам"),
+        BotCommand(command="upload", description="Как загрузить документ"),
+        BotCommand(command="list", description="Список загруженных документов"),
+        BotCommand(command="delete", description="Удалить документ по ID"),
+        BotCommand(command="stats", description="Статистика базы документов"),
+    ]
+
+
+@router.message(Command("start"))
+async def start_command_handler(message: Message) -> None:
+    """Send greeting and quick usage overview."""
+    await message.answer(
+        "Привет! 👋 Я ваш умный помощник по работе с документами.\n\n"
+        "Что я умею:\n"
+        "📥 Принимаю файлы (PDF, Markdown)\n"
+        "🔍 Мгновенно нахожу нужную информацию\n"
+        "💡 Отвечаю на вопросы по их содержимому\n\n"
+        "Чтобы начать, загрузите первый документ командой /upload или просто задайте мне вопрос!"
+    )
+
+
+@router.message(Command("help"))
+async def help_command_handler(message: Message) -> None:
+    """Show supported commands."""
+    await message.answer(
+        "С радостью помогу! Вот что можно сделать:\n\n"
+        "📥 `/upload` — загрузить файл\n"
+        "📚 `/list` — посмотреть загруженные документы\n"
+        "🗑 `/delete <id>` — удалить документ\n"
+        "📊 `/stats` — посмотреть общую статистику\n"
+        "❓ `/help` — открыть эту подсказку снова"
+    )
+
+
+@router.message(Command("stats"))
+async def stats_command_handler(message: Message) -> None:
+    """Show amount of indexed documents and chunks."""
+    try:
+        vector_store = get_vector_store()
+        documents = await vector_store.list_documents()
+        chunks_count = await vector_store.count_chunks()
+
+        await message.answer(
+            "Текущая статистика:\n"
+            f"- Документов: `{len(documents)}`\n"
+            f"- Фрагментов текста: `{chunks_count}`\n"
+            "- Запросов: `пока не отслеживается`"
+        )
+    except Exception as exc:  # pragma: no cover - defensive runtime guard
+        logger.exception("Failed to build stats: %s", exc)
+        await message.answer("Не удалось получить статистику.")

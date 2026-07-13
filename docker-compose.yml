@@ -1,0 +1,10 @@
+# Will be fully implemented in Stage 6.
+services:
+  bot:
+    build: .
+    command: ["python", "-m", "bot.main"]
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+      - ./docs:/app/docs
