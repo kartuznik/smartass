@@ -12,10 +12,12 @@ groups:
         data:
           - refId: A
             datasourceUid: prometheus
+            relativeTimeRange:
+              from: 600
+              to: 0
             model:
               editorMode: code
               expr: disk_free_percent < 10
-              instant: true
               intervalMs: 1000
               maxDataPoints: 43200
               refId: A
@@ -33,10 +35,12 @@ groups:
         data:
           - refId: A
             datasourceUid: prometheus
+            relativeTimeRange:
+              from: 600
+              to: 0
             model:
               editorMode: code
               expr: up{job="bot"} == 0
-              instant: true
               intervalMs: 1000
               maxDataPoints: 43200
               refId: A
@@ -54,10 +58,12 @@ groups:
         data:
           - refId: A
             datasourceUid: prometheus
+            relativeTimeRange:
+              from: 600
+              to: 0
             model:
               editorMode: code
               expr: (sum(rate(rag_query_duration_seconds_count[5m])) == 0) or (sum(rate(rag_queries_total[5m])) / sum(rate(rag_query_duration_seconds_count[5m])) < 0.95)
-              instant: true
               intervalMs: 1000
               maxDataPoints: 43200
               refId: A
