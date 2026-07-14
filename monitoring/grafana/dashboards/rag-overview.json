@@ -22,7 +22,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 0
+        "y": 6
       },
       "id": 1,
       "targets": [
@@ -49,7 +49,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 0
+        "y": 6
       },
       "id": 2,
       "targets": [
@@ -73,10 +73,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 6,
         "w": 8,
-        "x": 0,
-        "y": 8
+        "x": 16,
+        "y": 0
       },
       "id": 3,
       "targets": [
@@ -95,24 +95,46 @@
       },
       "fieldConfig": {
         "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 20
+              },
+              {
+                "color": "green",
+                "value": 50
+              }
+            ]
+          },
+          "min": 0,
+          "max": 100,
           "unit": "percent"
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 6,
         "w": 8,
         "x": 8,
-        "y": 8
+        "y": 0
       },
       "id": 4,
       "targets": [
         {
-          "expr": "100 - disk_free_percent{job=\"bot\"}",
+          "expr": "disk_free_percent{job=\"bot\"}",
           "refId": "A"
         }
       ],
-      "title": "Disk Usage (%)",
+      "title": "Disk Usage (Free)",
       "type": "gauge"
     },
     {
@@ -122,27 +144,51 @@
       },
       "fieldConfig": {
         "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
           "mappings": [
             {
               "options": {
                 "0": {
+                  "color": "red",
+                  "index": 0,
                   "text": "Disconnected"
                 },
                 "1": {
+                  "color": "green",
+                  "index": 1,
                   "text": "Connected"
                 }
               },
               "type": "value"
             }
-          ]
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 0
+              }
+            ]
+          },
+          "custom": {
+            "align": "center"
+          },
+          "decimals": 0
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 6,
         "w": 8,
-        "x": 16,
-        "y": 8
+        "x": 0,
+        "y": 0
       },
       "id": 5,
       "targets": [
