@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import threading
 from typing import Any
 
 from prometheus_client import start_http_server
@@ -54,7 +55,7 @@ def create_server() -> FastMCP:
 def main() -> None:
     """Entrypoint for running MCP server over SSE transport."""
     logger = get_mcp_logger()
-    start_http_server(8001)
+    threading.Thread(target=start_http_server, args=(8001,), daemon=True).start()
     logger.info("Prometheus metrics server started on 0.0.0.0:8001")
     server = create_server()
     host = os.getenv("MCP_SERVER_HOST", "0.0.0.0")

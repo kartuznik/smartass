@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import threading
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
@@ -50,12 +51,17 @@ async def health_check_loop(doctor: Doctor) -> None:
             await asyncio.sleep(30)
 
 
+def start_metrics_server_in_background(port: int) -> None:
+    """Start Prometheus HTTP exporter in background daemon thread."""
+    threading.Thread(target=start_http_server, args=(port,), daemon=True).start()
+
+
 async def run_bot() -> None:
     """Initialize bot and start polling."""
     settings = get_settings()
     logger = configure_logging(settings)
     logger.info("Starting RAG Telegram Bot (env=%s)", settings.app_env)
-    start_http_server(8001)
+    start_metrics_server_in_background(8001)
     logger.info("Prometheus metrics server started on 0.0.0.0:8001")
 
     bot = Bot(

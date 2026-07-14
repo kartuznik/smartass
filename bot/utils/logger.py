@@ -31,13 +31,17 @@ def configure_logging(settings: Settings) -> logging.Logger:
     stream_handler.setFormatter(formatter)
     root_logger.addHandler(stream_handler)
 
-    file_handler = RotatingFileHandler(
-        log_path,
-        maxBytes=settings.log_max_bytes,
-        backupCount=settings.log_backup_count,
-        encoding="utf-8",
-    )
-    file_handler.setFormatter(formatter)
-    root_logger.addHandler(file_handler)
+    try:
+        file_handler = RotatingFileHandler(
+            log_path,
+            maxBytes=settings.log_max_bytes,
+            backupCount=settings.log_backup_count,
+            encoding="utf-8",
+        )
+        file_handler.setFormatter(formatter)
+        root_logger.addHandler(file_handler)
+    except PermissionError:
+        # Do not crash bot startup if mounted logs volume has restrictive permissions.
+        root_logger.warning("File logging disabled: no write permission for %s", log_path)
 
     return logging.getLogger("rag_telegram_bot")
