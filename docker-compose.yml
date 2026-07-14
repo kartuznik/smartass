@@ -86,6 +86,7 @@ services:
       context: .
       dockerfile: Dockerfile
     command: ["python", "-m", "admin_panel.app"]
+    user: "0:0"
     env_file:
       - .env
     environment:
