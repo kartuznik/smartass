@@ -85,8 +85,13 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: ["python", "-m", "admin_panel.app"]
-    user: "0:0"
+    user: "root"
+    command:
+      [
+        "sh",
+        "-lc",
+        "chown -R appuser:appuser /app/docs /app/data && exec su -s /bin/sh appuser -c 'python -m admin_panel.app'",
+      ]
     env_file:
       - .env
     environment:

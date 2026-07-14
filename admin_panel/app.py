@@ -151,6 +151,12 @@ async def admin_index(_: str = Depends(_authenticate)) -> str:
 """
 
 
+@app.head("/")
+async def admin_head(_: str = Depends(_authenticate)) -> HTMLResponse:
+    """Health/auth check endpoint for HEAD requests."""
+    return HTMLResponse(content="", status_code=200)
+
+
 @app.post("/api/upload")
 async def upload_document(
     file: UploadFile = File(...),
