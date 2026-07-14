@@ -1,6 +1,6 @@
 # RAG Telegram Bot
 
-Production-ready Telegram bot with RAG search over PDF/Markdown documents, MCP SSE server for Cursor/Claude integration, Redis cache acceleration, Web Admin Panel, and full monitoring stack (Prometheus + Grafana + Telegram alerts).
+Production-ready Telegram bot with RAG search over PDF and Markdown (`.md`) documents, MCP SSE server for Cursor/Claude integration, Redis cache acceleration, Web Admin Panel, and full monitoring stack (Prometheus + Grafana + Telegram alerts).
 
 ## Quick Start
 
@@ -74,7 +74,7 @@ flowchart LR
 
 ### Data Flow
 
-1. User uploads PDF/MD in Telegram.
+1. User uploads PDF or Markdown (`.md`) in Telegram.
 2. Bot extracts text, splits into chunks, computes embeddings, stores chunks in ChromaDB.
 3. User asks a question -> RAG retrieves relevant chunks -> LLM generates grounded answer with sources.
 4. MCP client calls `search_docs`/`list_documents`/`get_document_info` over SSE.
@@ -112,7 +112,7 @@ OPENAI_API_KEY=sk-your-key
 ADMIN_USER_IDS=123456789
 TELEGRAM_ALERT_CHAT_ID=123456789
 REDIS_URL=redis://localhost:6379
-ADMIN_PASSWORD=your_secure_password_here
+ADMIN_PASSWORD=your_strong_password_here
 ```
 
 ## Functionality
@@ -121,7 +121,7 @@ ADMIN_PASSWORD=your_secure_password_here
 
 - `/start` - greeting and quick usage info
 - `/help` - list of available commands
-- `/upload` - upload PDF/Markdown document
+- `/upload` - upload PDF or Markdown (`.md`) document
 - `/list` - list indexed documents
 - `/delete <id>` - delete document by ID
 - `/stats` - user document/chunk stats
@@ -311,9 +311,9 @@ docker compose up -d
 
 ### Первый вход
 
-1. Откройте URL админки: `http://<your-server>:8003`
-2. Используйте логин `admin`
-3. Введите пароль из переменной `ADMIN_PASSWORD` (файл `.env`)
+- **URL:** `http://<IP_СЕРВЕРА>:8003`
+- **Логин:** `admin`
+- **Пароль:** Значение переменной `ADMIN_PASSWORD` из вашего файла `.env` (по умолчанию в `.env.example` указано `your_strong_password_here`, замените его на свой).
 
 ### Безопасная смена пароля
 

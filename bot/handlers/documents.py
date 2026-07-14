@@ -26,7 +26,7 @@ _settings = get_settings()
 _document_processor = DocumentProcessor(_settings)
 _vector_store = VectorStore(_settings)
 
-_ALLOWED_EXTENSIONS = {".pdf", ".md", ".markdown"}
+_ALLOWED_EXTENSIONS = {".pdf", ".md"}
 
 
 def get_vector_store() -> VectorStore:

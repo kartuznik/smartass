@@ -25,7 +25,7 @@ settings = get_settings()
 document_processor = DocumentProcessor(settings)
 vector_store = VectorStore(settings)
 started_at = time.time()
-allowed_extensions = {".pdf", ".md", ".markdown", ".txt"}
+allowed_extensions = {".pdf", ".md"}
 
 
 def _authenticate(credentials: HTTPBasicCredentials = Depends(security)) -> str:
@@ -85,7 +85,7 @@ async def admin_index(_: str = Depends(_authenticate)) -> str:
   <div class="card">
     <h3>Загрузка файла</h3>
     <div class="row">
-      <input id="fileInput" type="file" accept=".pdf,.md,.markdown,.txt" />
+      <input id="fileInput" type="file" accept=".pdf,.md" />
       <button onclick="uploadFile()">Загрузить</button>
       <button onclick="clearCache()">Очистить кэш</button>
     </div>
@@ -162,10 +162,10 @@ async def upload_document(
     file: UploadFile = File(...),
     _: str = Depends(_authenticate),
 ) -> dict[str, str]:
-    """Upload PDF/Markdown/TXT document and index it."""
+    """Upload PDF/Markdown document and index it."""
     suffix = Path(file.filename or "").suffix.lower()
     if suffix not in allowed_extensions:
-        raise HTTPException(status_code=400, detail="Supported formats: PDF, Markdown, TXT.")
+        raise HTTPException(status_code=400, detail="Supported formats: PDF and Markdown (.md).")
 
     docs_dir = Path(settings.docs_dir)
     docs_dir.mkdir(parents=True, exist_ok=True)

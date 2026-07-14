@@ -44,15 +44,15 @@ class DocumentProcessor:
             return tiktoken.get_encoding("cl100k_base")
 
     async def process_document(self, file_path: str | Path, uploaded_by: int) -> tuple[Document, list[Chunk]]:
-        """Extract metadata and chunks from PDF/Markdown documents."""
+        """Extract metadata and chunks from PDF/Markdown (.md) documents."""
         source_path = Path(file_path).expanduser().resolve()
         if not source_path.exists():
             raise FileNotFoundError(f"Document not found: {source_path}")
 
         extension = source_path.suffix.lower()
-        if extension not in {".pdf", ".md", ".markdown", ".txt"}:
+        if extension not in {".pdf", ".md"}:
             raise UnsupportedDocumentTypeError(
-                f"Unsupported extension '{extension}'. Supported: .pdf, .md, .markdown, .txt"
+                f"Unsupported extension '{extension}'. Supported: .pdf, .md"
             )
 
         stat_result = await asyncio.to_thread(source_path.stat)
