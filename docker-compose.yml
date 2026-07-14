@@ -81,5 +81,25 @@ services:
       - prometheus
     restart: unless-stopped
 
+  admin-panel:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["python", "-m", "admin_panel.app"]
+    env_file:
+      - .env
+    environment:
+      REDIS_URL: "redis://redis:6379"
+      ADMIN_PASSWORD: "${ADMIN_PASSWORD:-change-me}"
+    volumes:
+      - ./docs:/app/docs
+      - ./data:/app/data
+    ports:
+      - "8003:8003"
+    depends_on:
+      - bot
+      - redis
+    restart: unless-stopped
+
 volumes:
   redis_data:

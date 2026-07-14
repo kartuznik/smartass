@@ -50,9 +50,9 @@ class DocumentProcessor:
             raise FileNotFoundError(f"Document not found: {source_path}")
 
         extension = source_path.suffix.lower()
-        if extension not in {".pdf", ".md", ".markdown"}:
+        if extension not in {".pdf", ".md", ".markdown", ".txt"}:
             raise UnsupportedDocumentTypeError(
-                f"Unsupported extension '{extension}'. Supported: .pdf, .md, .markdown"
+                f"Unsupported extension '{extension}'. Supported: .pdf, .md, .markdown, .txt"
             )
 
         stat_result = await asyncio.to_thread(source_path.stat)
@@ -89,8 +89,8 @@ class DocumentProcessor:
         if file_path.suffix.lower() == ".pdf":
             return await asyncio.to_thread(self._extract_pdf_sync, file_path)
 
-        markdown_text = await asyncio.to_thread(file_path.read_text, "utf-8")
-        return markdown_text, {"pages": 1}
+        plain_text = await asyncio.to_thread(file_path.read_text, "utf-8")
+        return plain_text, {"pages": 1}
 
     def _extract_pdf_sync(self, file_path: Path) -> tuple[str, dict[str, Any]]:
         """Synchronously extract all text from a PDF file."""

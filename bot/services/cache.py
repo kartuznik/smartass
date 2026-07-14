@@ -76,5 +76,15 @@ class RAGCache:
             logger.warning("Cache clear failed: %s", exc)
             return 0
 
+    async def size(self) -> int:
+        """Return number of cached query keys."""
+        try:
+            redis = await self._get_redis()
+            keys = await redis.keys("rag:query:*")
+            return len(keys)
+        except Exception as exc:  # pragma: no cover - runtime infra guard
+            logger.warning("Cache size check failed: %s", exc)
+            return 0
+
 
 cache = RAGCache()

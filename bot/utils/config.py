@@ -47,6 +47,7 @@ class Settings(BaseSettings):
     redis_url: str = Field("redis://localhost:6379", alias="REDIS_URL")
 
     admin_user_ids: list[int] = Field(default_factory=list, alias="ADMIN_USER_IDS")
+    admin_password: str = Field("change-me", alias="ADMIN_PASSWORD")
 
     mcp_server_host: str = Field("0.0.0.0", alias="MCP_SERVER_HOST")
     mcp_server_port: int = Field(8081, alias="MCP_SERVER_PORT", ge=1, le=65535)
