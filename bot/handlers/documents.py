@@ -9,6 +9,7 @@ from uuid import uuid4
 from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.types import Message
+from werkzeug.utils import secure_filename
 
 from bot.services.document_processor import (
     DocumentProcessingError,
@@ -69,7 +70,10 @@ async def handle_document_upload(message: Message) -> None:
 
     docs_dir = Path(_settings.docs_dir)
     docs_dir.mkdir(parents=True, exist_ok=True)
-    safe_name = file_name.replace("/", "_").replace("\\", "_")
+    safe_name = secure_filename(file_name)
+    if not safe_name:
+        await message.answer("Не удалось обработать имя файла. Переименуйте файл и попробуйте снова.")
+        return
     local_path = docs_dir / f"{uuid4()}_{safe_name}"
 
     try:

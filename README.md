@@ -235,6 +235,14 @@ docker compose logs -f grafana
 docker compose logs -f prometheus
 ```
 
+## 🧪 Тестирование
+
+Запуск набора тестов:
+
+```bash
+pytest tests/ -v --cov=bot --cov=admin_panel
+```
+
 ## API Reference
 
 ### MCP Tools

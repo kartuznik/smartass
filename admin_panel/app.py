@@ -12,6 +12,7 @@ import uvicorn
 from fastapi import Depends, FastAPI, File, HTTPException, UploadFile, status
 from fastapi.responses import HTMLResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from werkzeug.utils import secure_filename
 
 from bot.services.cache import cache
 from bot.services.document_processor import DocumentProcessor
@@ -169,7 +170,9 @@ async def upload_document(
 
     docs_dir = Path(settings.docs_dir)
     docs_dir.mkdir(parents=True, exist_ok=True)
-    safe_name = (file.filename or "uploaded").replace("/", "_").replace("\\", "_")
+    safe_name = secure_filename(file.filename or "uploaded")
+    if not safe_name:
+        raise HTTPException(status_code=400, detail="Filename is empty after sanitization.")
     local_path = docs_dir / f"{uuid4()}_{safe_name}"
 
     async with aiofiles.open(local_path, "wb") as out:

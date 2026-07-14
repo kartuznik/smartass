@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "skills": {
+    "Python Security Scan": {
+      "source": "sugarforever/01coder-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/python-security-scan/SKILL.md",
+      "computedHash": "75e89763b88d487cb863b909682e0a09d2e46c230c56cdf8691a7a89274c7a4a"
+    },
+    "python-testing-patterns": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "skillPath": "plugins/python-development/skills/python-testing-patterns/SKILL.md",
+      "computedHash": "1306eea409e7eff2288d7658806cb508f18339a0ee9a686d324a0fd2570eae55"
+    }
+  }
+}
