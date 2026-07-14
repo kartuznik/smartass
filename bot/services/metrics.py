@@ -27,6 +27,16 @@ documents_indexed_total = Gauge(
     "Total number of indexed documents.",
 )
 
+disk_free_percent = Gauge(
+    "disk_free_percent",
+    "Free disk space percent for bot data directory.",
+)
+
+db_connected = Gauge(
+    "db_connected",
+    "Database connection status (1 connected, 0 disconnected).",
+)
+
 _active_user_lock = Lock()
 _active_user_last_seen: dict[int, float] = {}
 _ACTIVE_WINDOW_SECONDS = 24 * 60 * 60
@@ -54,3 +64,13 @@ def set_documents_indexed(count: int) -> None:
 def set_active_users(count: int) -> None:
     """Set active users gauge value from external diagnostics."""
     active_users_total.set(max(0, count))
+
+
+def set_disk_free_percent(percent: float) -> None:
+    """Set free disk percent gauge value."""
+    disk_free_percent.set(max(0.0, percent))
+
+
+def set_db_connected(is_connected: bool) -> None:
+    """Set database connection status gauge."""
+    db_connected.set(1.0 if is_connected else 0.0)

@@ -10,7 +10,12 @@ from typing import Any, Callable
 import aiosqlite
 from aiogram import Bot
 
-from bot.services.metrics import set_active_users, set_documents_indexed
+from bot.services.metrics import (
+    set_active_users,
+    set_db_connected,
+    set_disk_free_percent,
+    set_documents_indexed,
+)
 from bot.services.vector_store import VectorStore
 from bot.utils.config import Settings
 
@@ -75,13 +80,15 @@ class Doctor:
     async def get_system_status(self) -> str:
         """Build current system diagnostics report."""
         db_ok = await self.check_database()
-        disk_ok, disk_message, _ = self.check_disk_space()
+        disk_ok, disk_message, free_percent = self.check_disk_space()
         uptime_seconds = int(time.time() - self.started_at)
         uptime = self._format_uptime(uptime_seconds)
         documents_count = len(await self.vector_store.list_documents(user_id=0))
         active_users_count = await self._count_active_users_24h()
         set_documents_indexed(documents_count)
         set_active_users(active_users_count)
+        set_disk_free_percent(free_percent)
+        set_db_connected(db_ok)
 
         errors = "\n".join(f"- {item}" for item in self.last_errors[-5:]) if self.last_errors else "None"
         db_label = "Connected" if db_ok else self.db_status

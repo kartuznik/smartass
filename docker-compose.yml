@@ -34,3 +34,35 @@ services:
     restart: unless-stopped
     depends_on:
       - bot
+
+  prometheus:
+    image: prom/prometheus:latest
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    depends_on:
+      - bot
+      - mcp
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    user: "0:0"
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: "admin123"
+      TELEGRAM_BOT_TOKEN: "${TELEGRAM_BOT_TOKEN:-}"
+      TELEGRAM_CHAT_ID: "${TELEGRAM_ALERT_CHAT_ID:-}"
+    depends_on:
+      - bot
+      - mcp
+      - prometheus
+    restart: unless-stopped

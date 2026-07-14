@@ -1,0 +1,70 @@
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: rag-alerts
+    folder: RAG
+    interval: 1m
+    rules:
+      - uid: disk-space-low
+        title: Disk space below 10%
+        condition: A
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            model:
+              editorMode: code
+              expr: disk_free_percent < 10
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+        for: 1m
+        noDataState: NoData
+        execErrState: Error
+        annotations:
+          summary: Free disk space below 10%
+        labels:
+          severity: critical
+
+      - uid: bot-downtime
+        title: Bot downtime > 1 minute
+        condition: A
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            model:
+              editorMode: code
+              expr: up{job="bot"} == 0
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+        for: 1m
+        noDataState: Alerting
+        execErrState: Error
+        annotations:
+          summary: Bot is down for more than 1 minute
+        labels:
+          severity: critical
+
+      - uid: high-error-rate
+        title: Error rate > 5%
+        condition: A
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            model:
+              editorMode: code
+              expr: (sum(rate(rag_query_duration_seconds_count[5m])) == 0) or (sum(rate(rag_queries_total[5m])) / sum(rate(rag_query_duration_seconds_count[5m])) < 0.95)
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+        for: 5m
+        noDataState: NoData
+        execErrState: Error
+        annotations:
+          summary: Approximate query error rate exceeds 5%
+        labels:
+          severity: warning

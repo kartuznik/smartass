@@ -14,3 +14,4 @@ logs/*.log
 data/chroma_db/
 docs/*.pdf
 docs/*.md
+grafana_data/
