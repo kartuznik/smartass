@@ -7,8 +7,8 @@ groups:
     interval: 1m
     rules:
       - uid: disk-space-low
-        title: Disk space below 10%
-        condition: A
+        title: Мало места на диске
+        condition: C
         data:
           - refId: A
             datasourceUid: prometheus
@@ -17,21 +17,66 @@ groups:
               to: 0
             model:
               editorMode: code
-              expr: disk_free_percent < 10
+              exemplar: false
+              expr: disk_free_percent
               intervalMs: 1000
               maxDataPoints: 43200
+              range: true
               refId: A
+          - refId: B
+            datasourceUid: "__expr__"
+            relativeTimeRange:
+              from: 0
+              to: 0
+            model:
+              datasource:
+                type: "__expr__"
+                uid: "__expr__"
+              expression: A
+              reducer: last
+              settings:
+                mode: dropNN
+              type: reduce
+              refId: B
+          - refId: C
+            datasourceUid: "__expr__"
+            relativeTimeRange:
+              from: 0
+              to: 0
+            model:
+              datasource:
+                type: "__expr__"
+                uid: "__expr__"
+              expression: B
+              conditions:
+                - evaluator:
+                    params:
+                      - 10
+                    type: lt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - B
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              type: threshold
+              refId: C
         for: 1m
         noDataState: NoData
         execErrState: Error
         annotations:
-          summary: Free disk space below 10%
+          summary: Свободное место на диске ниже 10%
+          description: Доля свободного места в рабочем каталоге бота опустилась ниже порога 10%.
         labels:
+          alertname: DiskSpaceLow
           severity: critical
 
       - uid: bot-downtime
-        title: Bot downtime > 1 minute
-        condition: A
+        title: Бот не отвечает
+        condition: C
         data:
           - refId: A
             datasourceUid: prometheus
@@ -40,21 +85,66 @@ groups:
               to: 0
             model:
               editorMode: code
-              expr: up{job="bot"} == 0
+              exemplar: false
+              expr: avg_over_time(up{job="bot"}[2m])
               intervalMs: 1000
               maxDataPoints: 43200
+              range: true
               refId: A
+          - refId: B
+            datasourceUid: "__expr__"
+            relativeTimeRange:
+              from: 0
+              to: 0
+            model:
+              datasource:
+                type: "__expr__"
+                uid: "__expr__"
+              expression: A
+              reducer: last
+              settings:
+                mode: dropNN
+              type: reduce
+              refId: B
+          - refId: C
+            datasourceUid: "__expr__"
+            relativeTimeRange:
+              from: 0
+              to: 0
+            model:
+              datasource:
+                type: "__expr__"
+                uid: "__expr__"
+              expression: B
+              conditions:
+                - evaluator:
+                    params:
+                      - 1
+                    type: lt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - B
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              type: threshold
+              refId: C
         for: 1m
         noDataState: Alerting
         execErrState: Error
         annotations:
-          summary: Bot is down for more than 1 minute
+          summary: Бот не отвечает более 2 минут
+          description: Метрика доступности бота показывает значение ниже 1 за последние 2 минуты.
         labels:
+          alertname: BotDowntime
           severity: critical
 
       - uid: high-error-rate
-        title: Error rate > 5%
-        condition: A
+        title: Высокий уровень ошибок
+        condition: C
         data:
           - refId: A
             datasourceUid: prometheus
@@ -63,14 +153,59 @@ groups:
               to: 0
             model:
               editorMode: code
-              expr: (sum(rate(rag_query_duration_seconds_count[5m])) == 0) or (sum(rate(rag_queries_total[5m])) / sum(rate(rag_query_duration_seconds_count[5m])) < 0.95)
+              exemplar: false
+              expr: (sum(rate(rag_queries_failed_total[5m])) / clamp_min(sum(rate(rag_queries_total[5m])), 1)) * 100
               intervalMs: 1000
               maxDataPoints: 43200
+              range: true
               refId: A
+          - refId: B
+            datasourceUid: "__expr__"
+            relativeTimeRange:
+              from: 0
+              to: 0
+            model:
+              datasource:
+                type: "__expr__"
+                uid: "__expr__"
+              expression: A
+              reducer: mean
+              settings:
+                mode: dropNN
+              type: reduce
+              refId: B
+          - refId: C
+            datasourceUid: "__expr__"
+            relativeTimeRange:
+              from: 0
+              to: 0
+            model:
+              datasource:
+                type: "__expr__"
+                uid: "__expr__"
+              expression: B
+              conditions:
+                - evaluator:
+                    params:
+                      - 5
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - B
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              type: threshold
+              refId: C
         for: 5m
         noDataState: NoData
         execErrState: Error
         annotations:
-          summary: Approximate query error rate exceeds 5%
+          summary: Доля ошибок RAG-запросов выше 5%
+          description: Ошибки обработки запросов превысили допустимый уровень за последние 5 минут.
         labels:
+          alertname: HighErrorRate
           severity: warning

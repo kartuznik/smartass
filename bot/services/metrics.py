@@ -12,6 +12,11 @@ rag_queries_total = Counter(
     "Total number of successful RAG queries.",
 )
 
+rag_queries_failed_total = Counter(
+    "rag_queries_failed_total",
+    "Total number of failed RAG queries.",
+)
+
 rag_query_duration_seconds = Histogram(
     "rag_query_duration_seconds",
     "Total time spent processing RAG query (search + generation).",

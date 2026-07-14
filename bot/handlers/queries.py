@@ -10,7 +10,12 @@ from aiogram.types import Message
 
 from bot.models.document import Source
 from bot.services.memory import ConversationMemory
-from bot.services.metrics import rag_queries_total, rag_query_duration_seconds, track_active_user
+from bot.services.metrics import (
+    rag_queries_failed_total,
+    rag_queries_total,
+    rag_query_duration_seconds,
+    track_active_user,
+)
 from bot.services.rag import RAGService
 from bot.utils.config import get_settings
 
@@ -62,6 +67,7 @@ async def query_message_handler(message: Message) -> None:
         rag_queries_total.inc()
         await message.answer(_format_answer(answer_result.answer, answer_result.found, answer_result.sources))
     except Exception as exc:  # pragma: no cover - defensive runtime guard
+        rag_queries_failed_total.inc()
         logger.exception("RAG pipeline failed for user_id=%s: %s", user_id, exc)
         await message.answer("Извините, сервис временно недоступен. Попробуйте через пару минут.")
 
