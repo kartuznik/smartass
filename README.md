@@ -1,6 +1,6 @@
 # RAG Telegram Bot
 
-Production-ready Telegram bot with RAG search over PDF/Markdown documents, MCP SSE server for Cursor/Claude integration, and full monitoring stack (Prometheus + Grafana + Telegram alerts).
+Production-ready Telegram bot with RAG search over PDF/Markdown documents, MCP SSE server for Cursor/Claude integration, Redis cache acceleration, Web Admin Panel, and full monitoring stack (Prometheus + Grafana + Telegram alerts).
 
 ## Quick Start
 
@@ -18,23 +18,47 @@ docker compose up -d --build
 docker compose logs -f bot
 ```
 
+### Service Ports
+
+- `8000` - MCP SSE server
+- `8001` - bot metrics (`/metrics`)
+- `3000` - Grafana
+- `9090` - Prometheus
+- `6379` - Redis
+- `8003` - Web Admin Panel
+
 ### Required Environment Variables (`.env`)
 
 - `TELEGRAM_BOT_TOKEN` - Telegram bot token from BotFather
 - `OPENAI_API_KEY` - API key for embeddings and LLM
 - `ADMIN_USER_IDS` - comma-separated Telegram user IDs with admin access
 - `TELEGRAM_ALERT_CHAT_ID` - Telegram chat ID for Grafana alerts
+- `REDIS_URL` - Redis connection string for query cache
+- `ADMIN_PASSWORD` - password for Web Admin Panel auth
+
+## Features
+
+- Telegram RAG bot with semantic search and source-aware answers
+- MCP SSE integration for Cursor/Claude (`search_docs`, `list_documents`, `get_document_info`)
+- Redis cache for repeated RAG queries (typical repeated-query speedup 5-10x)
+- Web Admin Panel for browser-based document and cache management
+- Monitoring stack with Prometheus + Grafana
+- Russian-localized alerting messages and corrected panel queries/layouts
 
 ## Architecture
 
 ```mermaid
 flowchart LR
   U[Telegram User] --> B[Telegram Bot: aiogram]
+  A[Admin Browser] --> AP[Web Admin Panel :8003]
   B --> DP[Document Processor]
   DP --> VS[Vector Store: ChromaDB]
   B --> RAG[RAG Service]
+  AP --> DP
+  AP --> RAG
   RAG --> VS
   RAG --> OAI[OpenAI API]
+  RAG --> RC[Redis Cache :6379]
 
   C[Cursor / Claude] --> MCP[MCP Server SSE :8000]
   MCP --> RAG
@@ -54,7 +78,9 @@ flowchart LR
 2. Bot extracts text, splits into chunks, computes embeddings, stores chunks in ChromaDB.
 3. User asks a question -> RAG retrieves relevant chunks -> LLM generates grounded answer with sources.
 4. MCP client calls `search_docs`/`list_documents`/`get_document_info` over SSE.
-5. Metrics are scraped by Prometheus and visualized in Grafana; alerts are sent to Telegram.
+5. Repeated queries are resolved from Redis cache when possible.
+6. Admin can manage files and cache from the web panel.
+7. Metrics are scraped by Prometheus and visualized in Grafana; alerts are sent to Telegram.
 
 ## Installation
 
@@ -85,6 +111,8 @@ TELEGRAM_BOT_TOKEN=your-telegram-bot-token
 OPENAI_API_KEY=sk-your-key
 ADMIN_USER_IDS=123456789
 TELEGRAM_ALERT_CHAT_ID=123456789
+REDIS_URL=redis://localhost:6379
+ADMIN_PASSWORD=your_secure_password_here
 ```
 
 ## Functionality
@@ -155,6 +183,10 @@ docker compose up -d --force-recreate grafana
 docker compose logs --tail=100 grafana
 ```
 
+Notes:
+- Alert messages are Russian-localized.
+- Dashboard panels (`Database Status`, `Disk Usage`) use corrected Prometheus queries and fixed panel layout sizing.
+
 ## Troubleshooting
 
 ### Common Issues
@@ -163,6 +195,8 @@ docker compose logs --tail=100 grafana
 - **No answers from RAG**: check `OPENAI_API_KEY`, model availability, and indexed documents.
 - **Grafana alerting errors**: inspect provisioning logs and env vars for Telegram chat/token.
 - **Permission errors in containers**: verify mounted folder permissions (`data`, `docs`, `logs`).
+- **Redis cache issues**: verify Redis is reachable and `REDIS_URL` is correct.
+- **Admin panel login issues**: confirm `ADMIN_PASSWORD` in `.env`.
 
 ### Quick Health Check
 
@@ -172,6 +206,24 @@ docker compose logs --tail=100 grafana
 ```bash
 docker compose ps
 docker compose logs -f bot
+```
+
+Admin panel:
+
+```bash
+open http://localhost:8003
+```
+
+Redis cache cleanup:
+
+```bash
+docker compose exec redis redis-cli FLUSHALL
+```
+
+Metrics quick check:
+
+```bash
+curl -s http://localhost:8001/metrics | rg "db_connected|disk_free_percent|bot_uptime_seconds"
 ```
 
 ### Logs
