@@ -1,5 +1,6 @@
 """Service layer exports."""
 
+from bot.services.cache import RAGCache
 from bot.services.document_processor import DocumentProcessor
 from bot.services.doctor import Doctor
 from bot.services.memory import ConversationMemory
@@ -10,6 +11,7 @@ __all__ = [
     "ConversationMemory",
     "Doctor",
     "DocumentProcessor",
+    "RAGCache",
     "RAGService",
     "VectorStore",
 ]

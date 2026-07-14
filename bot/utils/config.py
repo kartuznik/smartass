@@ -44,6 +44,7 @@ class Settings(BaseSettings):
     chunk_size_tokens: int = Field(500, alias="CHUNK_SIZE_TOKENS", ge=100, le=4000)
     chunk_overlap_tokens: int = Field(50, alias="CHUNK_OVERLAP_TOKENS", ge=0, le=500)
     max_history_messages: int = Field(10, alias="MAX_HISTORY_MESSAGES", ge=1, le=50)
+    redis_url: str = Field("redis://localhost:6379", alias="REDIS_URL")
 
     admin_user_ids: list[int] = Field(default_factory=list, alias="ADMIN_USER_IDS")
 

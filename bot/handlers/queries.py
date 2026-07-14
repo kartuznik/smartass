@@ -9,6 +9,7 @@ from aiogram import Bot
 from aiogram.types import Message
 
 from bot.models.document import Source
+from bot.services.cache import cache
 from bot.services.memory import ConversationMemory
 from bot.services.metrics import (
     rag_queries_failed_total,
@@ -47,6 +48,12 @@ async def query_message_handler(message: Message) -> None:
     await bot.send_chat_action(chat_id=message.chat.id, action="typing")
 
     try:
+        cached = await cache.get(query)
+        if cached is not None:
+            cached_answer, cached_sources = cached
+            await message.answer(_format_answer(cached_answer, True, cached_sources))
+            return
+
         await _memory.add_message(user_id=user_id, role="user", content=query)
         history = await _memory.get_history(user_id)
         track_active_user(user_id)
@@ -64,6 +71,7 @@ async def query_message_handler(message: Message) -> None:
             )
 
         await _memory.add_message(user_id=user_id, role="assistant", content=answer_result.answer)
+        await cache.set(query, answer_result.answer, answer_result.sources)
         rag_queries_total.inc()
         await message.answer(_format_answer(answer_result.answer, answer_result.found, answer_result.sources))
     except Exception as exc:  # pragma: no cover - defensive runtime guard

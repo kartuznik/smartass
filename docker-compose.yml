@@ -6,6 +6,8 @@ services:
     command: ["python", "-m", "bot.main"]
     env_file:
       - .env
+    environment:
+      REDIS_URL: "redis://redis:6379"
     user: "0:0"
     volumes:
       - ./data:/app/data
@@ -13,6 +15,16 @@ services:
       - ./logs:/app/logs
     ports:
       - "8001:8001"
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
     restart: unless-stopped
 
   mcp:
@@ -68,3 +80,6 @@ services:
       - mcp
       - prometheus
     restart: unless-stopped
+
+volumes:
+  redis_data:

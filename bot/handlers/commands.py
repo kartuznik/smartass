@@ -9,6 +9,7 @@ from aiogram.filters import Command
 from aiogram.types import BotCommand, Message
 
 from bot.handlers.documents import get_vector_store
+from bot.services.cache import cache
 from bot.services.doctor import get_doctor_instance
 from bot.utils.config import get_settings
 
@@ -27,6 +28,7 @@ def get_bot_commands() -> list[BotCommand]:
         BotCommand(command="delete", description="Удалить документ по ID"),
         BotCommand(command="stats", description="Статистика базы документов"),
         BotCommand(command="doctor", description="Диагностика системы"),
+        BotCommand(command="clearcache", description="Очистить кэш ответов"),
     ]
 
 
@@ -92,3 +94,14 @@ async def doctor_command_handler(message: Message) -> None:
 
     report = await doctor.get_system_status()
     await message.answer(report)
+
+
+@router.message(Command("clearcache"))
+async def clearcache_command_handler(message: Message) -> None:
+    """Clear Redis cache for repeated RAG queries (admins only)."""
+    if message.from_user is None or message.from_user.id not in settings.admin_user_ids:
+        await message.answer("Команда доступна только администраторам.")
+        return
+
+    deleted = await cache.clear()
+    await message.answer(f"✅ Кэш очищен (ключей удалено: {deleted})")
