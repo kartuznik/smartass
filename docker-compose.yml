@@ -59,6 +59,8 @@ services:
       - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
     environment:
       GF_SECURITY_ADMIN_PASSWORD: "admin123"
+      GF_DEFAULT_APP_TIMEZONE: "Europe/Helsinki"
+      TZ: "Europe/Helsinki"
       TELEGRAM_BOT_TOKEN: "${TELEGRAM_BOT_TOKEN}"
       TELEGRAM_ALERT_CHAT_ID: "${TELEGRAM_ALERT_CHAT_ID}"
     depends_on:

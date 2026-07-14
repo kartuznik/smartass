@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import shutil
 import time
 from pathlib import Path
@@ -12,12 +13,15 @@ from aiogram import Bot
 
 from bot.services.metrics import (
     set_active_users,
+    set_bot_uptime_seconds,
     set_db_connected,
     set_disk_free_percent,
     set_documents_indexed,
 )
 from bot.services.vector_store import VectorStore
 from bot.utils.config import Settings
+
+logger = logging.getLogger(__name__)
 
 
 class Doctor:
@@ -64,17 +68,23 @@ class Doctor:
             return False
 
     def check_disk_space(self) -> tuple[bool, str, float]:
-        """Check free disk percentage for configured data directory."""
+        """Check free disk percentage relative to bot data usage budget."""
         data_dir = Path(self.settings.data_dir)
         data_dir.mkdir(parents=True, exist_ok=True)
 
         usage = shutil.disk_usage(data_dir)
-        free_percent = (usage.free / usage.total) * 100 if usage.total else 0.0
+        data_used_bytes = sum(
+            path.stat().st_size for path in data_dir.rglob("*") if path.is_file()
+        )
+        data_capacity_bytes = data_used_bytes + usage.free
+        free_percent = (usage.free / data_capacity_bytes) * 100 if data_capacity_bytes else 0.0
         free_gb = usage.free / (1024**3)
-        message = f"{free_gb:.2f} GB free ({free_percent:.1f}%)"
-        healthy = free_percent >= 10.0
+        message = f"{free_gb:.2f} GB free ({free_percent:.1f}%) in data budget"
+        healthy = free_percent >= 20.0
+        logger.info("Disk free: %.1f%% (data_dir=%s, free_gb=%.2f)", free_percent, data_dir, free_gb)
         if not healthy:
             self._remember_error(f"Low disk space: {message}")
+        set_disk_free_percent(free_percent)
         return healthy, message, free_percent
 
     async def get_system_status(self) -> str:
@@ -89,6 +99,7 @@ class Doctor:
         set_active_users(active_users_count)
         set_disk_free_percent(free_percent)
         set_db_connected(db_ok)
+        set_bot_uptime_seconds(uptime_seconds)
 
         errors = "\n".join(f"- {item}" for item in self.last_errors[-5:]) if self.last_errors else "None"
         db_label = "Connected" if db_ok else self.db_status

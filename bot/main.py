@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import threading
+import time
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
@@ -16,6 +17,7 @@ from bot.handlers.commands import router as commands_router
 from bot.handlers.documents import router as documents_router
 from bot.handlers.queries import router as queries_router
 from bot.services.doctor import Doctor, set_doctor_instance
+from bot.services.metrics import set_bot_uptime_seconds
 from bot.utils.config import get_settings
 from bot.utils.logger import configure_logging
 
@@ -33,12 +35,13 @@ async def health_check_loop(doctor: Doctor) -> None:
                 disk_ok,
                 disk_message,
             )
+            set_bot_uptime_seconds(int(time.time() - doctor.started_at))
 
             if not db_ok:
                 await doctor.notify_admin("🔴 Критично: не удалось восстановить подключение к базе данных.")
             if not disk_ok:
                 await doctor.notify_admin(
-                    f"🔴 Критично: свободное место на диске ниже порога: {disk_message} (<10%)."
+                    f"🔴 Критично: свободное место в хранилище данных ниже порога: {disk_message} (<20%)."
                 )
 
             await asyncio.sleep(300)

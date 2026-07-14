@@ -42,6 +42,11 @@ db_connected = Gauge(
     "Database connection status (1 connected, 0 disconnected).",
 )
 
+bot_uptime_seconds = Gauge(
+    "bot_uptime_seconds",
+    "Bot process uptime in seconds.",
+)
+
 _active_user_lock = Lock()
 _active_user_last_seen: dict[int, float] = {}
 _ACTIVE_WINDOW_SECONDS = 24 * 60 * 60
@@ -79,3 +84,8 @@ def set_disk_free_percent(percent: float) -> None:
 def set_db_connected(is_connected: bool) -> None:
     """Set database connection status gauge."""
     db_connected.set(1.0 if is_connected else 0.0)
+
+
+def set_bot_uptime_seconds(seconds: int) -> None:
+    """Set bot uptime in seconds gauge."""
+    bot_uptime_seconds.set(max(0, int(seconds)))

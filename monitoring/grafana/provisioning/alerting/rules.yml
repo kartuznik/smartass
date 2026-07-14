@@ -18,7 +18,7 @@ groups:
             model:
               editorMode: code
               exemplar: false
-              expr: disk_free_percent
+              expr: ((disk_free_percent < bool 20) and on() (bot_uptime_seconds > bool 300) and on() (avg_over_time(up{job="bot"}[2m]) > bool 0.5)) * 100
               intervalMs: 1000
               maxDataPoints: 43200
               range: true
@@ -51,8 +51,8 @@ groups:
               conditions:
                 - evaluator:
                     params:
-                      - 10
-                    type: lt
+                      - 50
+                    type: gt
                   operator:
                     type: and
                   query:
@@ -65,11 +65,11 @@ groups:
               type: threshold
               refId: C
         for: 1m
-        noDataState: NoData
+        noDataState: OK
         execErrState: Error
         annotations:
-          summary: Свободное место на диске ниже 10%
-          description: Доля свободного места в рабочем каталоге бота опустилась ниже порога 10%.
+          summary: Свободное место в хранилище данных ниже 20%
+          description: Свободное место в data storage опустилось ниже 20%, а uptime бота превышает 5 минут.
         labels:
           alertname: DiskSpaceLow
           severity: critical
@@ -201,7 +201,7 @@ groups:
               type: threshold
               refId: C
         for: 5m
-        noDataState: NoData
+        noDataState: OK
         execErrState: Error
         annotations:
           summary: Доля ошибок RAG-запросов выше 5%

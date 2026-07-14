@@ -16,7 +16,9 @@ contactPoints:
             🔴 Серьезность: *{{ .Labels.severity }}*
             📝 Описание: {{ .Annotations.summary }}
             {{ if .Annotations.description }}🔍 Детали: {{ .Annotations.description }}{{ end }}
-            ⏰ Начало: {{ .StartsAt.Format "02.01.2006 15:04:05" }}
+            ⏰ Время (UTC): {{ .StartsAt.UTC.Format "02.01.2006 15:04:05" }}
+            {{ if .EndsAt }}✅ Завершение (UTC): {{ .EndsAt.UTC.Format "02.01.2006 15:04:05" }}{{ end }}
+            💡 Локальное время: {{ .StartsAt.Format "02.01.2006 15:04:05Z07:00" }}
             {{ end }}
           parse_mode: "Markdown"
           disable_web_page_preview: true
