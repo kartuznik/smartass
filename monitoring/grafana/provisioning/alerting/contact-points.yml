@@ -11,14 +11,20 @@ contactPoints:
           chatid: $__env{TELEGRAM_ALERT_CHAT_ID}
           message: |
             {{ range .Alerts }}
-            🚨 *ВНИМАНИЕ: {{ .Labels.alertname }}*
+            🚨 *{{ .Labels.alertname }}*
 
-            🔴 Серьезность: *{{ .Labels.severity }}*
+            🔴 Серьезность: *{{ if eq .Labels.severity "critical" }}критическая{{ else if eq .Labels.severity "warning" }}предупреждение{{ else if eq .Labels.severity "error" }}ошибка{{ else }}{{ .Labels.severity }}{{ end }}*
             📝 Описание: {{ .Annotations.summary }}
             {{ if .Annotations.description }}🔍 Детали: {{ .Annotations.description }}{{ end }}
-            ⏰ Время (UTC): {{ .StartsAt.UTC.Format "02.01.2006 15:04:05" }}
-            {{ if .EndsAt }}✅ Завершение (UTC): {{ .EndsAt.UTC.Format "02.01.2006 15:04:05" }}{{ end }}
+            ⏰ Началось: {{ .StartsAt.Format "02.01.2006 15:04:05" }}
+            {{ if eq .Status "resolved" }}✅ Завершилось: {{ .EndsAt.Format "02.01.2006 15:04:05" }}{{ end }}
             💡 Локальное время: {{ .StartsAt.Format "02.01.2006 15:04:05Z07:00" }}
+
+            {{ end }}
+            {{ if eq .Status "firing" }}
+            🔥 Статус: АКТИВЕН
+            {{ else }}
+            ✅ Статус: УСТРАНЁН
             {{ end }}
           parse_mode: "Markdown"
           disable_web_page_preview: true

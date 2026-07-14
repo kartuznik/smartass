@@ -66,13 +66,14 @@ groups:
               refId: C
         for: 1m
         noDataState: OK
-        execErrState: Error
+        execErrState: OK
         annotations:
           summary: Свободное место в хранилище данных ниже 20%
           description: Свободное место в data storage опустилось ниже 20%, а uptime бота превышает 5 минут.
         labels:
           alertname: DiskSpaceLow
-          severity: critical
+          severity: критическая
+          alert_type: ресурсы
 
       - uid: bot-downtime
         title: Бот не отвечает
@@ -133,14 +134,15 @@ groups:
               type: threshold
               refId: C
         for: 1m
-        noDataState: Alerting
-        execErrState: Error
+        noDataState: OK
+        execErrState: OK
         annotations:
           summary: Бот не отвечает более 2 минут
           description: Метрика доступности бота показывает значение ниже 1 за последние 2 минуты.
         labels:
           alertname: BotDowntime
-          severity: critical
+          severity: критическая
+          alert_type: доступность
 
       - uid: high-error-rate
         title: Высокий уровень ошибок
@@ -202,10 +204,11 @@ groups:
               refId: C
         for: 5m
         noDataState: OK
-        execErrState: Error
+        execErrState: OK
         annotations:
           summary: Доля ошибок RAG-запросов выше 5%
           description: Ошибки обработки запросов превысили допустимый уровень за последние 5 минут.
         labels:
           alertname: HighErrorRate
-          severity: warning
+          severity: предупреждение
+          alert_type: ошибки

@@ -17,7 +17,7 @@ from bot.handlers.commands import router as commands_router
 from bot.handlers.documents import router as documents_router
 from bot.handlers.queries import router as queries_router
 from bot.services.doctor import Doctor, set_doctor_instance
-from bot.services.metrics import set_bot_uptime_seconds
+from bot.services.metrics import set_bot_uptime_seconds, set_db_connected
 from bot.utils.config import get_settings
 from bot.utils.logger import configure_logging
 
@@ -36,6 +36,7 @@ async def health_check_loop(doctor: Doctor) -> None:
                 disk_message,
             )
             set_bot_uptime_seconds(int(time.time() - doctor.started_at))
+            set_db_connected(db_ok)
 
             if not db_ok:
                 await doctor.notify_admin("🔴 Критично: не удалось восстановить подключение к базе данных.")
@@ -44,7 +45,7 @@ async def health_check_loop(doctor: Doctor) -> None:
                     f"🔴 Критично: свободное место в хранилище данных ниже порога: {disk_message} (<20%)."
                 )
 
-            await asyncio.sleep(300)
+            await asyncio.sleep(60)
         except asyncio.CancelledError:
             logger.info("Health check loop cancelled.")
             raise

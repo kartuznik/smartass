@@ -78,7 +78,10 @@ def set_active_users(count: int) -> None:
 
 def set_disk_free_percent(percent: float) -> None:
     """Set free disk percent gauge value."""
-    disk_free_percent.set(max(0.0, percent))
+    normalized = float(percent)
+    if 0.0 <= normalized <= 1.0:
+        normalized *= 100.0
+    disk_free_percent.set(min(100.0, max(0.0, normalized)))
 
 
 def set_db_connected(is_connected: bool) -> None:

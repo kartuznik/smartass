@@ -27,7 +27,7 @@
       "id": 1,
       "targets": [
         {
-          "expr": "sum(rate(rag_queries_total[5m])) * 60",
+          "expr": "sum(rate(rag_queries_total{job=\"bot\"}[5m])) * 60",
           "refId": "A"
         }
       ],
@@ -54,7 +54,7 @@
       "id": 2,
       "targets": [
         {
-          "expr": "sum(rate(rag_query_duration_seconds_sum[5m])) / sum(rate(rag_query_duration_seconds_count[5m]))",
+          "expr": "sum(rate(rag_query_duration_seconds_sum{job=\"bot\"}[5m])) / clamp_min(sum(rate(rag_query_duration_seconds_count{job=\"bot\"}[5m])), 1)",
           "refId": "A"
         }
       ],
@@ -81,7 +81,7 @@
       "id": 3,
       "targets": [
         {
-          "expr": "active_users_total",
+          "expr": "active_users_total{job=\"bot\"}",
           "refId": "A"
         }
       ],
@@ -108,11 +108,11 @@
       "id": 4,
       "targets": [
         {
-          "expr": "disk_free_percent / 100",
+          "expr": "100 - disk_free_percent{job=\"bot\"}",
           "refId": "A"
         }
       ],
-      "title": "Disk Usage (free%)",
+      "title": "Disk Usage (%)",
       "type": "gauge"
     },
     {
@@ -147,7 +147,7 @@
       "id": 5,
       "targets": [
         {
-          "expr": "db_connected",
+          "expr": "db_connected{job=\"bot\"}",
           "refId": "A"
         }
       ],

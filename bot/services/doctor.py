@@ -53,6 +53,7 @@ class Doctor:
         try:
             await self._list_collections()
             self.db_status = "Connected"
+            set_db_connected(True)
             return True
         except Exception as exc:
             self._remember_error(f"Database check failed: {exc}")
@@ -61,10 +62,12 @@ class Doctor:
             self.vector_store = VectorStore(self.settings)
             await self._list_collections()
             self.db_status = "Reconnected"
+            set_db_connected(True)
             return True
         except Exception as exc:  # pragma: no cover - runtime storage failures
             self.db_status = "Disconnected"
             self._remember_error(f"Database auto-heal failed: {exc}")
+            set_db_connected(False)
             return False
 
     def check_disk_space(self) -> tuple[bool, str, float]:

@@ -5,6 +5,7 @@ policies:
     receiver: telegram-ru
     group_by:
       - alertname
-    group_wait: 1m
-    group_interval: 10m
-    repeat_interval: 4h
+      - severity
+    group_wait: 2m
+    group_interval: 30m
+    repeat_interval: 6h
