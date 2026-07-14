@@ -6,9 +6,9 @@ services:
     command: ["python", "-m", "bot.main"]
     env_file:
       - .env
+    user: "0:0"
     volumes:
       - ./data:/app/data
-      - ./data/bot_memory.db:/app/data/bot_memory.db
       - ./docs:/app/docs
       - ./logs:/app/logs
     ports:

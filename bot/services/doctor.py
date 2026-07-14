@@ -124,6 +124,17 @@ class Doctor:
             return 0
 
         async with aiosqlite.connect(str(db_path)) as db:
+            await db.execute(
+                """
+                CREATE TABLE IF NOT EXISTS chat_history (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL,
+                    role TEXT NOT NULL,
+                    content TEXT NOT NULL,
+                    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+                )
+                """
+            )
             cursor = await db.execute(
                 """
                 SELECT COUNT(DISTINCT user_id)

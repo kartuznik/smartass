@@ -14,7 +14,8 @@ COPY . .
 
 RUN useradd --create-home --shell /usr/sbin/nologin appuser && \
     mkdir -p /app/data /app/docs /app/logs && \
-    chown -R appuser:appuser /app
+    chown -R appuser:appuser /app && \
+    chmod -R 755 /app
 
 USER appuser
 
