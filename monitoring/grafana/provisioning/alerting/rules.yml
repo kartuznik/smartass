@@ -18,7 +18,7 @@ groups:
             model:
               editorMode: code
               exemplar: false
-              expr: ((disk_free_percent < bool 20) and on() (bot_uptime_seconds > bool 300) and on() (avg_over_time(up{job="bot"}[2m]) > bool 0.5)) * 100
+              expr: ((disk_free_percent{job="bot"} < bool 20) and on() (bot_uptime_seconds{job="bot"} > bool 300) and on() (avg_over_time(up{job="bot"}[2m]) > bool 0.5)) * 100
               intervalMs: 1000
               maxDataPoints: 43200
               range: true
@@ -154,7 +154,7 @@ groups:
             model:
               editorMode: code
               exemplar: false
-              expr: (sum(rate(rag_queries_failed_total[5m])) / clamp_min(sum(rate(rag_queries_total[5m])), 1)) * 100
+              expr: (sum(rate(rag_queries_failed_total{job="bot"}[5m])) / clamp_min(sum(rate(rag_queries_total{job="bot"}[5m])), 1)) * 100
               intervalMs: 1000
               maxDataPoints: 43200
               range: true
