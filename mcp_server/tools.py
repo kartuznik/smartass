@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Optional
 
 from mcp_server.config import get_mcp_logger, get_rag_service, get_vector_store
 
@@ -22,17 +22,62 @@ def _format_sources_markdown(sources: list[Any]) -> str:
     return "\n".join(lines)
 
 
-async def search_docs(query: str, top_k: int = 3) -> str:
+def _extract_field(
+    direct_value: Any,
+    field_name: str,
+    payload: dict[str, Any] | None,
+    arguments: dict[str, Any] | None,
+) -> Any:
+    """Resolve field value from direct arg, payload or nested arguments."""
+    if direct_value is not None:
+        return direct_value
+
+    merged: dict[str, Any] = {}
+    if isinstance(arguments, dict):
+        merged.update(arguments)
+    if isinstance(payload, dict):
+        merged.update(payload)
+
+    nested_arguments = merged.get("arguments")
+    if isinstance(nested_arguments, dict):
+        merged.update(nested_arguments)
+
+    return merged.get(field_name)
+
+
+async def search_docs(
+    query: Optional[str] = None,
+    top_k: Optional[int] = 3,
+    payload: dict[str, Any] | None = None,
+    arguments: dict[str, Any] | None = None,
+) -> str:
     """Search documentation and return generated answer with sources."""
     logger = get_mcp_logger()
     rag_service = get_rag_service()
-    effective_top_k = max(1, top_k)
+    logger.info(
+        "search_docs called with query=%r top_k=%r payload=%r arguments=%r",
+        query,
+        top_k,
+        payload,
+        arguments,
+    )
+
+    resolved_query = _extract_field(query, "query", payload, arguments)
+    resolved_top_k = _extract_field(top_k, "top_k", payload, arguments)
+    if not isinstance(resolved_query, str) or not resolved_query.strip():
+        return "Параметр `query` обязателен и должен быть непустой строкой."
 
     try:
-        logger.info("MCP search_docs called: query_length=%s top_k=%s", len(query), effective_top_k)
-        context = await rag_service.search(query=query, top_k=effective_top_k, user_id=ADMIN_USER_ID)
+        parsed_top_k = int(resolved_top_k) if resolved_top_k is not None else 3
+    except (TypeError, ValueError):
+        parsed_top_k = 3
+    effective_top_k = max(1, parsed_top_k)
+
+    try:
+        logger.info("MCP search_docs resolved: query_length=%s top_k=%s", len(resolved_query), effective_top_k)
+        context = await rag_service.search(query=resolved_query, top_k=effective_top_k, user_id=ADMIN_USER_ID)
         answer_result = await rag_service.generate_answer(
-            query=query,
+            query=resolved_query,
             context=context,
             conversation_history=[],
         )
@@ -49,7 +94,10 @@ async def search_docs(query: str, top_k: int = 3) -> str:
         )
 
 
-async def list_documents(payload: dict[str, Any] | None = None) -> str:
+async def list_documents(
+    payload: dict[str, Any] | None = None,
+    arguments: dict[str, Any] | None = None,
+) -> str:
     """Return markdown table with all indexed documents.
 
     Accepts and ignores optional payload to stay compatible with clients
@@ -59,7 +107,7 @@ async def list_documents(payload: dict[str, Any] | None = None) -> str:
     vector_store = get_vector_store()
 
     try:
-        logger.info("MCP list_documents called")
+        logger.info("list_documents called with payload=%r arguments=%r", payload, arguments)
         documents = await vector_store.list_documents(user_id=ADMIN_USER_ID)
         if not documents:
             return "Документы пока не загружены."
@@ -78,16 +126,30 @@ async def list_documents(payload: dict[str, Any] | None = None) -> str:
         return "Не удалось получить список документов."
 
 
-async def get_document_info(document_id: str) -> str:
+async def get_document_info(
+    document_id: Optional[str] = None,
+    payload: dict[str, Any] | None = None,
+    arguments: dict[str, Any] | None = None,
+) -> str:
     """Return detailed metadata for one document."""
     logger = get_mcp_logger()
     vector_store = get_vector_store()
+    logger.info(
+        "get_document_info called with document_id=%r payload=%r arguments=%r",
+        document_id,
+        payload,
+        arguments,
+    )
+
+    resolved_document_id = _extract_field(document_id, "document_id", payload, arguments)
+    if not isinstance(resolved_document_id, str) or not resolved_document_id.strip():
+        return "Параметр `document_id` обязателен и должен быть непустой строкой."
 
     try:
-        logger.info("MCP get_document_info called: document_id=%s", document_id)
-        info = await vector_store.get_document_info(document_id, user_id=ADMIN_USER_ID)
+        logger.info("MCP get_document_info resolved: document_id=%s", resolved_document_id)
+        info = await vector_store.get_document_info(resolved_document_id, user_id=ADMIN_USER_ID)
         if not info:
-            return f"Документ `{document_id}` не найден."
+            return f"Документ `{resolved_document_id}` не найден."
 
         metadata = info.get("metadata", {})
         metadata_lines = "\n".join(
@@ -105,4 +167,4 @@ async def get_document_info(document_id: str) -> str:
         )
     except Exception as exc:  # pragma: no cover - runtime guard
         logger.exception("MCP get_document_info failed: %s", exc)
-        return f"Не удалось получить информацию о документе `{document_id}`."
+        return f"Не удалось получить информацию о документе `{resolved_document_id}`."

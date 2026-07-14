@@ -32,22 +32,34 @@ def create_server() -> FastMCP:
         name="search_docs",
         description="Поиск по документации и ответ с источниками.",
     )
-    async def search_docs_tool(query: str, top_k: int = 3) -> str:
-        return await search_docs(query=query, top_k=top_k)
+    async def search_docs_tool(
+        query: str | None = None,
+        top_k: int = 3,
+        payload: dict[str, Any] | None = None,
+        arguments: dict[str, Any] | None = None,
+    ) -> str:
+        return await search_docs(query=query, top_k=top_k, payload=payload, arguments=arguments)
 
     @mcp.tool(
         name="list_documents",
         description="Список загруженных документов.",
     )
-    async def list_documents_tool(payload: dict[str, Any] | None = None) -> str:
-        return await list_documents(payload=payload)
+    async def list_documents_tool(
+        ignore_payload: dict[str, Any] | None = None,
+        arguments: dict[str, Any] | None = None,
+    ) -> str:
+        return await list_documents(payload=ignore_payload, arguments=arguments)
 
     @mcp.tool(
         name="get_document_info",
         description="Детальная информация о документе по его ID.",
     )
-    async def get_document_info_tool(document_id: str) -> str:
-        return await get_document_info(document_id=document_id)
+    async def get_document_info_tool(
+        document_id: str | None = None,
+        payload: dict[str, Any] | None = None,
+        arguments: dict[str, Any] | None = None,
+    ) -> str:
+        return await get_document_info(document_id=document_id, payload=payload, arguments=arguments)
 
     return mcp
 
