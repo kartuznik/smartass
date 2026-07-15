@@ -3,14 +3,15 @@
 from __future__ import annotations
 
 import ast
+import logging
 from typing import Callable, Literal, TypedDict, cast
 
-from dotenv import load_dotenv
 from langchain_core.messages import HumanMessage, SystemMessage
-from langchain_openai import ChatOpenAI
 from langgraph.graph import END, START, StateGraph
 
-load_dotenv()
+from agents.llm_config import LLMConfig
+
+logger = logging.getLogger(__name__)
 
 ClassificationLabel = Literal["math", "code", "general"]
 
@@ -38,8 +39,11 @@ def _normalize_label(raw_label: str) -> ClassificationLabel:
 
 
 def _classify_with_llm(user_query: str) -> ClassificationLabel:
-    """Classify a request using GPT-4o-mini."""
-    model = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+    """Classify a request using configured provider/model."""
+    provider = LLMConfig.get_provider()
+    model_name = LLMConfig.get_model_name()
+    logger.info("Using provider: %s, model: %s", provider, model_name)
+    model = LLMConfig.create_chat_model(temperature=0)
     response = model.invoke(
         [
             SystemMessage(

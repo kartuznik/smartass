@@ -132,3 +132,72 @@ pytest tests/test_multi_agent.py -v
 3. Ожидаемое поведение:
    - сначала придет `🔍 Анализирую тему...` и появится индикатор “печатает...”;
    - затем сообщение обновится финальным результатом (`Research` + `Draft`).
+
+## LLM Providers: OpenAI vs DeepSeek
+
+### Зачем нужен provider abstraction
+
+- Агенты не должны знать о конкретном вендоре LLM.
+- В коде используется единый конфиг-слой `agents/llm_config.py`, который выбирает провайдера по `LLM_PROVIDER`.
+- Это позволяет быстро переключаться между OpenAI и DeepSeek без изменений логики графов.
+
+### Сравнение провайдеров
+
+| Провайдер | Ориентировочная стоимость | Скорость | Качество | Когда использовать |
+|---|---:|---|---|---|
+| GPT-4o | ~$5-10 / 1M токенов | Средняя/высокая | Очень высокое | Финальные проверки с максимальным качеством |
+| GPT-4o-mini | ~$0.15 / 1M токенов | Высокая | Хорошее | Ежедневная разработка и регресс-тесты |
+| DeepSeek-V3 | ~$0.14 / 1M токенов | Высокая | Хорошее | Массовое обучение агентной логики и циклов |
+
+### Как получить DeepSeek API key
+
+1. Зарегистрируйся на [platform.deepseek.com](https://platform.deepseek.com).
+2. Создай API key в личном кабинете.
+3. Запиши ключ в `DEEPSEEK_API_KEY` в `ai-agents-lab/.env`.
+
+### Примеры `.env` под разные сценарии
+
+#### 1) Только обучение (DeepSeek)
+
+```env
+LLM_PROVIDER=deepseek
+DEEPSEEK_API_KEY=your_deepseek_key
+DEEPSEEK_BASE_URL=https://api.deepseek.com
+MODEL_NAME=deepseek-chat
+```
+
+#### 2) Только финальные проверки (OpenAI)
+
+```env
+LLM_PROVIDER=openai
+OPENAI_API_KEY=your_openai_key
+OPENAI_BASE_URL=https://api.openai.com/v1
+MODEL_NAME=gpt-4o-mini
+```
+
+#### 3) Гибрид
+
+```env
+# По умолчанию для ежедневной разработки:
+LLM_PROVIDER=deepseek
+DEEPSEEK_API_KEY=your_deepseek_key
+MODEL_NAME=deepseek-chat
+
+# Перед финальной валидацией вручную переключить:
+# LLM_PROVIDER=openai
+# OPENAI_API_KEY=your_openai_key
+# MODEL_NAME=gpt-4o-mini
+```
+
+### Экономия бюджета ($0.70)
+
+- GPT-4o: ~$0.70 = ~70K-140K токенов (мало для активных multi-agent loops).
+- GPT-4o-mini: ~$0.70 = ~4.6M токенов.
+- DeepSeek-V3: ~$0.70 = ~5M токенов.
+
+Практическая оценка на обучение: если один агентный прогон в среднем расходует ~1K токенов, то:
+- GPT-4o: ~70-140 прогонов;
+- GPT-4o-mini: ~4600 прогонов;
+- DeepSeek-V3: ~5000 прогонов.
+
+Рекомендация: DeepSeek для ежедневных итераций, GPT-4o-mini для финальных проверок качества.

@@ -35,6 +35,9 @@ def research_node(state: MultiAgentState) -> dict[str, str]:
 
 def writer_node(state: MultiAgentState) -> dict[str, str]:
     """Produce a draft using research data and reviewer feedback."""
+    # Week 2/3 use deterministic mock logic.
+    # Future extension: replace this block with LLMConfig.create_chat_model(...)
+    # and prompt-based generation while keeping the same state contract.
     time.sleep(0.02)
     topic = state["topic"]
     research_data = state["research_data"]
