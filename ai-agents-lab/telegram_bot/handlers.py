@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import time
 from contextlib import suppress
 from typing import cast
 
@@ -17,10 +18,18 @@ from agents.multi_agent import (
     build_initial_multi_agent_state,
     build_multi_agent_graph,
 )
+from agents.memory import ChatMemory
+from agents.metrics import (
+    agent_request_duration_seconds,
+    agent_requests_failed_total,
+    agent_requests_total,
+    observe_token_usage,
+)
 
 logger = logging.getLogger(__name__)
 router = Router()
 multi_agent_graph = build_multi_agent_graph()
+chat_memory = ChatMemory(max_messages=20)
 
 
 def _format_result_markdown(result: MultiAgentState) -> str:
@@ -33,7 +42,8 @@ def _format_result_markdown(result: MultiAgentState) -> str:
         "### 🔬 Research\n"
         f"{research_data}\n\n"
         "### 📝 Draft\n"
-        f"{draft}"
+        f"{draft}\n\n"
+        f"_Итераций ревью: {result['revision_count']}_"
     )
 
 
@@ -46,21 +56,39 @@ async def _run_research_flow(message: Message, topic: str) -> None:
         return
 
     user_id = message.from_user.id if message.from_user else 0
-    initial_state = build_initial_multi_agent_state(topic=topic.strip(), user_id=user_id)
+    conversation_history = chat_memory.get_user_memory(user_id)
+    initial_state = build_initial_multi_agent_state(
+        topic=topic.strip(),
+        user_id=user_id,
+        conversation_history=conversation_history,
+        use_llm=True,
+    )
 
     progress_message = await message.answer("🔍 Анализирую тему...")
     typing_task = asyncio.create_task(_typing_pulse(message))
+    started_at = time.perf_counter()
 
     try:
         result = cast(
             MultiAgentState,
             await multi_agent_graph.ainvoke(initial_state),
         )
+        elapsed = time.perf_counter() - started_at
+        agent_requests_total.inc()
+        agent_request_duration_seconds.observe(elapsed)
+        observe_token_usage(
+            result.get("llm_prompt_tokens", 0),
+            result.get("llm_completion_tokens", 0),
+        )
+        chat_memory.save_user_memory(user_id, topic.strip(), result["draft"])
         await progress_message.edit_text(
             _format_result_markdown(result),
             parse_mode=ParseMode.MARKDOWN,
         )
     except Exception:
+        elapsed = time.perf_counter() - started_at
+        agent_requests_failed_total.inc()
+        agent_request_duration_seconds.observe(elapsed)
         logger.exception("Multi-agent graph execution failed for user_id=%s", user_id)
         await progress_message.edit_text("Произошла ошибка, попробуйте позже.")
     finally:

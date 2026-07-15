@@ -8,6 +8,8 @@ def test_reviewer_feedback_loop_stops_with_iteration_limit() -> None:
 
     assert result["user_id"] == 0
     assert result["topic"] == "плохой черновик"
+    assert isinstance(result["conversation_history"], list)
+    assert result["use_llm"] is False
     assert result["research_data"]
     assert result["draft"]
 

@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+import asyncio
 import time
 
 from dotenv import load_dotenv
 from openai import APIStatusError
 
 from agents.llm_config import LLMConfig
-from agents.simple_agent import run_simple_agent
+from agents.multi_agent import build_initial_multi_agent_state, build_multi_agent_graph
 
 
 def main() -> None:
@@ -19,7 +20,7 @@ def main() -> None:
     print(f"Provider: {provider}")
     print(f"Model: {model_name}")
 
-    query = "Сколько будет 25 * 4?"
+    topic = "Сколько будет 25 * 4?"
     started_at = time.perf_counter()
 
     try:
@@ -27,12 +28,20 @@ def main() -> None:
         model = LLMConfig.create_chat_model(temperature=0)
         _ = model.invoke("Reply with exactly one token: ok")
 
-        # Force math branch to verify deterministic math path end-to-end.
-        result = run_simple_agent(query, classifier_fn=lambda _: "math")
+        graph = build_multi_agent_graph()
+        initial_state = build_initial_multi_agent_state(
+            topic=topic,
+            user_id=0,
+            conversation_history=[],
+            use_llm=True,
+        )
+        result = asyncio.run(graph.ainvoke(initial_state))
         elapsed = time.perf_counter() - started_at
 
         print(f"Execution time: {elapsed:.2f}s")
-        print(f"Result: {result['tool_result']}")
+        print(f"Revisions: {result['revision_count']}")
+        print("Research:", str(result["research_data"])[:300])
+        print("Draft:", str(result["draft"])[:400])
     except ValueError as exc:
         print("Configuration error:", exc)
         print("Hint: set OPENAI_API_KEY in ai-agents-lab/.env")

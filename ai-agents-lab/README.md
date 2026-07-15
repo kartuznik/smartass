@@ -216,3 +216,60 @@ MODEL_NAME=deepseek-chat
 - ежедневная разработка и тесты: `LLM_PROVIDER=openai`, `MODEL_NAME=gpt-4o-mini`;
 - тяжелые/дорогие real-call тесты: запускать вручную;
 - unit-тесты: оставлять mock-подход без сетевых вызовов.
+
+## Production Architecture
+
+Ниже production-схема, собранная адаптацией проверенных модулей из других ботов:
+
+```text
+Telegram User
+    |
+    v
+[aiogram handlers] ---> [LangGraph: WebSearch -> Researcher -> Writer <-> Reviewer]
+    |                                   |                 |
+    |                                   |                 +--> LLM Provider (OpenAI / DeepSeek via LLMConfig)
+    |                                   |
+    |                                   +--> Tavily Web Search + TG channel parser
+    |
+    +--> SQLite Memory + Anchors (conversation history, bookmarks)
+    |
+    +--> Prometheus Metrics (:8001)
+              |
+              v
+       Prometheus (:9091) ---> Grafana (:3001)
+              |
+              +--> FastAPI Admin Panel (:8004)
+```
+
+### Какие модули адаптированы
+
+- **Real LLM + orchestration:** `agents/multi_agent.py` (узлы Researcher/Writer/Reviewer + loop) через `agents/llm_config.py`.
+- **Web search:** `agents/web_search.py` + `agents/tg_parser.py` (адаптация идеи `search_with_tavily` и парсинга `t.me/s/...`).
+- **Memory + anchors + storage:** `agents/memory.py`, `agents/anchors.py`, `agents/database.py`.
+- **Admin panel:** `admin_panel/app.py` (FastAPI, endpoints для диалогов/памяти/якорей).
+- **Monitoring:** `agents/metrics.py` + `monitoring/prometheus` + `monitoring/grafana`.
+
+### Deployment (Docker Compose)
+
+1. Заполни `ai-agents-lab/.env` (минимум: `TELEGRAM_BOT_TOKEN`, `OPENAI_API_KEY`, `ADMIN_PASSWORD`).
+2. Запусти стек:
+   ```bash
+   docker compose up -d --build
+   ```
+3. Проверь состояние:
+   ```bash
+   docker compose ps
+   ```
+4. Доступ к сервисам:
+   - Admin panel: [http://localhost:8004](http://localhost:8004)
+   - Prometheus: [http://localhost:9091](http://localhost:9091)
+   - Grafana: [http://localhost:3001](http://localhost:3001)
+
+### Operational Notes
+
+- Порты изолированы от основного RAG-стека:
+  - admin-panel: `8004`
+  - prometheus: `9091`
+  - grafana: `3001`
+- Для веб-поиска нужен `TAVILY_API_KEY`.
+- Для стабильного polling должен работать только **один** инстанс бота с тем же `TELEGRAM_BOT_TOKEN`.
