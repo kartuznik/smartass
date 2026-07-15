@@ -1,16 +1,16 @@
 # RAG Telegram Bot
 
-Production-ready Telegram bot with RAG search over PDF and Markdown (`.md`) documents, MCP SSE server for Cursor/Claude integration, Redis cache acceleration, Web Admin Panel, and full monitoring stack (Prometheus + Grafana + Telegram alerts).
+Готовый к production Telegram-бот с RAG-поиском по документам PDF и Markdown (`.md`), MCP SSE-сервером для интеграции с Cursor/Claude, ускорением повторных запросов через Redis, Web Admin Panel и полноценным стеком мониторинга (Prometheus + Grafana + Telegram alerts).
 
-## Quick Start
+## Быстрый старт
 
-### Requirements
+### Требования
 
 - Python `3.12+`
 - Docker Engine + Docker Compose v2
-- VPS (recommended for 24/7 bot + MCP + monitoring)
+- VPS (рекомендуется для круглосуточной работы бота, MCP и мониторинга)
 
-### 3-Command Setup
+### Запуск в 3 команды
 
 ```bash
 cp .env.example .env
@@ -18,34 +18,34 @@ docker compose up -d --build
 docker compose logs -f bot
 ```
 
-### Service Ports
+### Порты сервисов
 
 - `8000` - MCP SSE server
-- `8001` - bot metrics (`/metrics`)
+- `8001` - метрики бота (`/metrics`)
 - `3000` - Grafana
 - `9090` - Prometheus
 - `6379` - Redis
 - `8003` - Web Admin Panel
 
-### Required Environment Variables (`.env`)
+### Обязательные переменные окружения (`.env`)
 
-- `TELEGRAM_BOT_TOKEN` - Telegram bot token from BotFather
-- `OPENAI_API_KEY` - API key for embeddings and LLM
-- `ADMIN_USER_IDS` - comma-separated Telegram user IDs with admin access
-- `TELEGRAM_ALERT_CHAT_ID` - Telegram chat ID for Grafana alerts
-- `REDIS_URL` - Redis connection string for query cache
-- `ADMIN_PASSWORD` - password for Web Admin Panel auth
+- `TELEGRAM_BOT_TOKEN` - токен Telegram-бота из BotFather
+- `OPENAI_API_KEY` - API-ключ для embeddings и LLM
+- `ADMIN_USER_IDS` - список Telegram user ID администраторов через запятую
+- `TELEGRAM_ALERT_CHAT_ID` - Telegram chat ID для алертов Grafana
+- `REDIS_URL` - строка подключения к Redis для кэша запросов
+- `ADMIN_PASSWORD` - пароль для авторизации в Web Admin Panel
 
-## Features
+## Возможности
 
-- Telegram RAG bot with semantic search and source-aware answers
-- MCP SSE integration for Cursor/Claude (`search_docs`, `list_documents`, `get_document_info`)
-- Redis cache for repeated RAG queries (typical repeated-query speedup 5-10x)
-- Web Admin Panel for browser-based document and cache management
-- Monitoring stack with Prometheus + Grafana
-- Russian-localized alerting messages and corrected panel queries/layouts
+- Telegram RAG-бот с семантическим поиском и ответами с источниками
+- MCP SSE-интеграция для Cursor/Claude (`search_docs`, `list_documents`, `get_document_info`)
+- Redis-кэш для повторных RAG-запросов (типичное ускорение повторных запросов в 5-10 раз)
+- Web Admin Panel для управления документами и кэшем из браузера
+- Стек мониторинга на Prometheus + Grafana
+- Полностью русифицированные алерты и исправленные запросы/разметка панелей
 
-## Architecture
+## Архитектура
 
 ```mermaid
 flowchart LR
@@ -72,19 +72,19 @@ flowchart LR
   G --> T[Telegram Alerts]
 ```
 
-### Data Flow
+### Поток данных
 
-1. User uploads PDF or Markdown (`.md`) in Telegram.
-2. Bot extracts text, splits into chunks, computes embeddings, stores chunks in ChromaDB.
-3. User asks a question -> RAG retrieves relevant chunks -> LLM generates grounded answer with sources.
-4. MCP client calls `search_docs`/`list_documents`/`get_document_info` over SSE.
-5. Repeated queries are resolved from Redis cache when possible.
-6. Admin can manage files and cache from the web panel.
-7. Metrics are scraped by Prometheus and visualized in Grafana; alerts are sent to Telegram.
+1. Пользователь загружает PDF или Markdown (`.md`) в Telegram.
+2. Бот извлекает текст, делит его на чанки, вычисляет embeddings и сохраняет чанки в ChromaDB.
+3. Пользователь задаёт вопрос -> RAG извлекает релевантные чанки -> LLM генерирует обоснованный ответ с источниками.
+4. MCP-клиент вызывает `search_docs`/`list_documents`/`get_document_info` через SSE.
+5. Повторные запросы, когда возможно, отдаются из Redis-кэша.
+6. Администратор управляет файлами и кэшем через web panel.
+7. Метрики собираются Prometheus и визуализируются в Grafana; алерты отправляются в Telegram.
 
-## Installation
+## Установка
 
-### Local (venv)
+### Локально (venv)
 
 ```bash
 python3 -m venv .venv
@@ -94,7 +94,7 @@ cp .env.example .env
 python3 -m bot.main
 ```
 
-### Docker (recommended)
+### Docker (рекомендуется)
 
 ```bash
 cp .env.example .env
@@ -102,9 +102,9 @@ docker compose up -d --build
 docker compose ps
 ```
 
-### `.env` Setup
+### Настройка `.env`
 
-Minimum required:
+Минимально необходимые значения:
 
 ```bash
 TELEGRAM_BOT_TOKEN=your-telegram-bot-token
@@ -115,26 +115,26 @@ REDIS_URL=redis://localhost:6379
 ADMIN_PASSWORD=your_strong_password_here
 ```
 
-## Functionality
+## Функциональность
 
-### Telegram Commands
+### Команды Telegram
 
-- `/start` - greeting and quick usage info
-- `/help` - list of available commands
-- `/upload` - upload PDF or Markdown (`.md`) document
-- `/list` - list indexed documents
-- `/delete <id>` - delete document by ID
-- `/stats` - user document/chunk stats
-- `/doctor` - health diagnostics (admin only)
+- `/start` - приветствие и краткая инструкция
+- `/help` - список доступных команд
+- `/upload` - загрузка документа PDF или Markdown (`.md`)
+- `/list` - список проиндексированных документов
+- `/delete <id>` - удаление документа по ID
+- `/stats` - статистика документов/чанков пользователя
+- `/doctor` - диагностика состояния сервиса (только для админов)
 
-### MCP Integration (Cursor / Claude)
+### MCP-интеграция (Cursor / Claude)
 
-MCP server uses SSE transport:
+MCP server использует SSE-транспорт:
 
-- External VPS: `http://YOUR_VPS_IP:8000/sse`
-- Cursor Remote SSH (same host): `http://localhost:8000/sse`
+- Внешний VPS: `http://YOUR_VPS_IP:8000/sse`
+- Cursor Remote SSH (тот же host): `http://localhost:8000/sse`
 
-Cursor config example:
+Пример конфигурации Cursor:
 
 ```json
 {
@@ -146,87 +146,87 @@ Cursor config example:
 }
 ```
 
-### How RAG Search Works
+### Как работает RAG-поиск
 
-1. Query embedding is computed.
-2. ChromaDB performs semantic similarity search.
-3. Top chunks are formatted with source metadata.
-4. LLM receives query + context + short conversation history.
-5. Bot returns answer and source list with relevance score.
+1. Вычисляется embedding запроса.
+2. ChromaDB выполняет семантический поиск по близости.
+3. Top-чанки форматируются вместе с метаданными источников.
+4. LLM получает запрос + контекст + короткую историю диалога.
+5. Бот возвращает ответ и список источников с оценкой релевантности.
 
-## Monitoring
+## Мониторинг
 
 ### Prometheus
 
-- Bot metrics endpoint: `http://localhost:8001/metrics`
-- MCP metrics endpoint (host): `http://localhost:8002/metrics`
-- Prometheus UI: `http://localhost:9090`
+- endpoint метрик бота: `http://localhost:8001/metrics`
+- endpoint метрик MCP (host): `http://localhost:8002/metrics`
+- интерфейс Prometheus: `http://localhost:9090`
 
 ### Grafana
 
-- URL: `http://localhost:3000`
-- Login: `admin`
-- Password: `admin123` (change for production)
+- Адрес: `http://localhost:3000`
+- Логин: `admin`
+- Пароль: `admin123` (измените для production)
 
-### Telegram Alerts
+### Telegram-алерты
 
-1. Set `TELEGRAM_BOT_TOKEN` and `TELEGRAM_ALERT_CHAT_ID` in `.env`.
-2. Start/recreate Grafana:
+1. Укажите `TELEGRAM_BOT_TOKEN` и `TELEGRAM_ALERT_CHAT_ID` в `.env`.
+2. Запустите/пересоздайте Grafana:
 
 ```bash
 docker compose up -d --force-recreate grafana
 ```
 
-3. Verify provisioning:
+3. Проверьте provisioning:
 
 ```bash
 docker compose logs --tail=100 grafana
 ```
 
-Notes:
-- Alert messages are Russian-localized.
-- Dashboard panels (`Database Status`, `Disk Usage`) use corrected Prometheus queries and fixed panel layout sizing.
+Примечания:
+- Сообщения алертов русифицированы.
+- Панели дашборда (`Database Status`, `Disk Usage`) используют исправленные Prometheus-запросы и корректные размеры layout.
 
-## Troubleshooting
+## Диагностика и устранение проблем
 
-### Common Issues
+### Частые проблемы
 
-- **MCP unavailable**: ensure `mcp` service is running and port `8000` is exposed.
-- **No answers from RAG**: check `OPENAI_API_KEY`, model availability, and indexed documents.
-- **Grafana alerting errors**: inspect provisioning logs and env vars for Telegram chat/token.
-- **Permission errors in containers**: verify mounted folder permissions (`data`, `docs`, `logs`).
-- **Redis cache issues**: verify Redis is reachable and `REDIS_URL` is correct.
-- **Admin panel login issues**: confirm `ADMIN_PASSWORD` in `.env`.
+- **MCP недоступен**: убедитесь, что сервис `mcp` запущен и порт `8000` открыт.
+- **RAG не возвращает ответы**: проверьте `OPENAI_API_KEY`, доступность модели и наличие проиндексированных документов.
+- **Ошибки алертинга Grafana**: проверьте логи provisioning и переменные окружения для Telegram chat/token.
+- **Ошибки прав в контейнерах**: проверьте права на смонтированные директории (`data`, `docs`, `logs`).
+- **Проблемы с Redis-кэшем**: убедитесь, что Redis доступен и `REDIS_URL` указан корректно.
+- **Проблемы входа в admin panel**: проверьте `ADMIN_PASSWORD` в `.env`.
 
-### Quick Health Check
+### Быстрая проверка состояния
 
-- In Telegram (admin): run `/doctor`.
-- In Docker:
+- В Telegram (админ): выполните `/doctor`.
+- В Docker:
 
 ```bash
 docker compose ps
 docker compose logs -f bot
 ```
 
-Admin panel:
+Web Admin Panel:
 
 ```bash
 open http://localhost:8003
 ```
 
-Redis cache cleanup:
+Очистка Redis-кэша:
 
 ```bash
 docker compose exec redis redis-cli FLUSHALL
 ```
 
-Metrics quick check:
+Быстрая проверка метрик:
 
 ```bash
 curl -s http://localhost:8001/metrics | rg "db_connected|disk_free_percent|bot_uptime_seconds"
 ```
 
-### Logs
+### Логи
 
 ```bash
 docker compose logs -f bot
@@ -243,22 +243,22 @@ docker compose logs -f prometheus
 pytest tests/ -v --cov=bot --cov=admin_panel
 ```
 
-## API Reference
+## API-справка
 
-### MCP Tools
+### MCP-инструменты
 
-- `search_docs(query, top_k=3)` - semantic search + generated answer with sources
-- `list_documents()` - list indexed documents
-- `get_document_info(document_id)` - metadata/details for one document
+- `search_docs(query, top_k=3)` - семантический поиск + сгенерированный ответ с источниками
+- `list_documents()` - список проиндексированных документов
+- `get_document_info(document_id)` - метаданные/детали по документу
 
-### Metrics Endpoints
+### Метрики (endpoints)
 
-- `GET /metrics` on bot (`:8001`)
-- `GET /metrics` on MCP (`:8002` mapped from container `:8001`)
+- `GET /metrics` на bot (`:8001`)
+- `GET /metrics` на MCP (`:8002`, проброшен с контейнерного `:8001`)
 
-## Production Deployment
+## Production-развёртывание
 
-### Docker Compose Deployment
+### Деплой через Docker Compose
 
 ```bash
 cp .env.example .env
@@ -266,9 +266,9 @@ docker compose up -d --build
 docker compose ps
 ```
 
-### Systemd Auto-Start (optional)
+### Автозапуск через Systemd (опционально)
 
-Create `/etc/systemd/system/rag-bot-stack.service`:
+Создайте `/etc/systemd/system/rag-bot-stack.service`:
 
 ```ini
 [Unit]
@@ -287,28 +287,28 @@ RemainAfterExit=yes
 WantedBy=multi-user.target
 ```
 
-Enable:
+Включение:
 
 ```bash
 sudo systemctl daemon-reload
 sudo systemctl enable --now rag-bot-stack
 ```
 
-### Backup / Restore
+### Резервное копирование / восстановление
 
-Backup important state:
+Что нужно включать в бэкап:
 
-- `data/chroma_db` - vector index
-- `data/bot_memory.db` - chat memory
-- `docs/` - uploaded files
+- `data/chroma_db` - векторный индекс
+- `data/bot_memory.db` - память чатов
+- `docs/` - загруженные файлы
 
-Example backup:
+Пример бэкапа:
 
 ```bash
 tar -czf rag-backup-$(date +%F).tar.gz data docs
 ```
 
-Restore:
+Восстановление:
 
 ```bash
 tar -xzf rag-backup-YYYY-MM-DD.tar.gz
