@@ -61,3 +61,37 @@ pytest tests/ -v
 - Запрос: `привет, как дела?`
   - Классификация: `general`
   - Ответ: дружелюбный общий ответ
+
+## Неделя 2: Multi-Agent Loop
+
+### Концепция
+
+На этой неделе строим multi-agent систему с тремя ролями:
+- `Researcher` собирает факты по теме.
+- `Writer` готовит черновик.
+- `Reviewer` проверяет качество и может вернуть задачу на доработку.
+
+### Архитектура цикла
+
+```text
+START -> [research_node] -> [writer_node] -> [reviewer_node]
+                                          ^         |
+                                          |         |
+                                          +----(feedback & revision_count < 2)
+
+[reviewer_node] --(no feedback OR revision_count >= 2)--> END
+```
+
+### Как избегаем бесконечных циклов
+
+- `Reviewer` повышает `revision_count`, когда находит проблему в черновике.
+- Маршрутизация после ревью:
+  - если есть `feedback` и `revision_count < 2` -> вернуться в `writer_node`;
+  - иначе -> завершить граф (`END`).
+- Это гарантирует, что цикл ограничен максимум двумя возвратами.
+
+### Запуск теста недели 2
+
+```bash
+pytest tests/test_multi_agent.py -v
+```
