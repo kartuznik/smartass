@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
+from contextlib import suppress
 from typing import cast
 
 from aiogram import Router
@@ -47,7 +49,7 @@ async def _run_research_flow(message: Message, topic: str) -> None:
     initial_state = build_initial_multi_agent_state(topic=topic.strip(), user_id=user_id)
 
     progress_message = await message.answer("🔍 Анализирую тему...")
-    await message.answer_chat_action(action=ChatAction.TYPING)
+    typing_task = asyncio.create_task(_typing_pulse(message))
 
     try:
         result = cast(
@@ -61,6 +63,17 @@ async def _run_research_flow(message: Message, topic: str) -> None:
     except Exception:
         logger.exception("Multi-agent graph execution failed for user_id=%s", user_id)
         await progress_message.edit_text("Произошла ошибка, попробуйте позже.")
+    finally:
+        typing_task.cancel()
+        with suppress(asyncio.CancelledError):
+            await typing_task
+
+
+async def _typing_pulse(message: Message) -> None:
+    """Send typing action periodically while long graph run is in progress."""
+    while True:
+        await message.answer_chat_action(action=ChatAction.TYPING)
+        await asyncio.sleep(4)
 
 
 @router.message(CommandStart())
