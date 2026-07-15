@@ -6,6 +6,7 @@ from agents.multi_agent import run_multi_agent
 def test_reviewer_feedback_loop_stops_with_iteration_limit() -> None:
     result = run_multi_agent("плохой черновик")
 
+    assert result["user_id"] == 0
     assert result["topic"] == "плохой черновик"
     assert result["research_data"]
     assert result["draft"]

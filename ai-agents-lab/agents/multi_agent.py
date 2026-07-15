@@ -13,6 +13,7 @@ RouteLabel = Literal["writer_node", "__end__"]
 class MultiAgentState(TypedDict):
     """Shared state for Researcher -> Writer -> Reviewer workflow."""
 
+    user_id: int
     topic: str
     research_data: str
     draft: str
@@ -106,14 +107,20 @@ def build_multi_agent_graph():
     return graph.compile()
 
 
-def run_multi_agent(topic: str) -> MultiAgentState:
-    """Run workflow with initial state."""
-    graph = build_multi_agent_graph()
-    initial_state: MultiAgentState = {
+def build_initial_multi_agent_state(topic: str, user_id: int) -> MultiAgentState:
+    """Create a fresh state for one user/topic run."""
+    return {
+        "user_id": user_id,
         "topic": topic,
         "research_data": "",
         "draft": "",
         "feedback": "",
         "revision_count": 0,
     }
+
+
+def run_multi_agent(topic: str, user_id: int = 0) -> MultiAgentState:
+    """Run workflow with initial state."""
+    graph = build_multi_agent_graph()
+    initial_state = build_initial_multi_agent_state(topic=topic, user_id=user_id)
     return cast(MultiAgentState, graph.invoke(initial_state))
