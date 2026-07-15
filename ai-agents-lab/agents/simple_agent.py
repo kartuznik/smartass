@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import ast
 import logging
+import re
 from typing import Callable, Literal, TypedDict, cast
 
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -83,7 +84,24 @@ def _safe_eval_math(expression: str) -> float:
                 return left**right
         raise ValueError("Unsupported expression")
 
-    cleaned = expression.replace("=", "").replace("?", "").strip()
+    cleaned_source = (
+        expression.replace("=", " ")
+        .replace("?", " ")
+        .replace(",", ".")
+        .replace("×", "*")
+    )
+    candidates = [
+        chunk.strip()
+        for chunk in re.findall(r"[\d\.\s\+\-\*\/\(\)\^]+", cleaned_source)
+    ]
+    math_candidates = [
+        chunk
+        for chunk in candidates
+        if any(char.isdigit() for char in chunk)
+        and any(op in chunk for op in "+-*/^")
+    ]
+    cleaned = max(math_candidates, key=len) if math_candidates else cleaned_source.strip()
+    cleaned = cleaned.replace("^", "**")
     parsed = ast.parse(cleaned, mode="eval")
     return _eval(parsed)
 
