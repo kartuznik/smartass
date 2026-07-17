@@ -1,5 +1,11 @@
 # RAG Telegram Bot
 
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)]()
+[![LangChain](https://img.shields.io/badge/langchain-latest-green.svg)]()
+[![ChromaDB](https://img.shields.io/badge/chromadb-latest-orange.svg)]()
+[![Docker ready](https://img.shields.io/badge/docker-ready-blue.svg)]()
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)]()
+
 Готовый к production Telegram-бот с RAG-поиском по документам PDF и Markdown (`.md`), MCP SSE-сервером для интеграции с Cursor/Claude, ускорением повторных запросов через Redis, Web Admin Panel и полноценным стеком мониторинга (Prometheus + Grafana + Telegram alerts).
 
 ## Быстрый старт
