@@ -1,1 +1,1 @@
-"""TODO: implement in next stages."""
+"""Test package marker for consistent pytest imports."""

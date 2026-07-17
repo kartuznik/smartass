@@ -1,1 +1,1 @@
-"""TODO: implement in next stages."""
+"""Telegram bot handler package."""
