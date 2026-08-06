@@ -13,5 +13,9 @@ logs/*.log
 *.db
 data/chroma_db/
 docs/*.pdf
+# User-uploaded markdown in docs/ corpus; keep ops docs tracked:
 docs/*.md
+!docs/RUNBOOK.md
+!docs/demo/
+!docs/demo/**
 grafana_data/
