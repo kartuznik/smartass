@@ -11,9 +11,9 @@
 | Паспорт | |
 |---|---|
 | **Уровень** | Level 2 — Smart assistant (RAG + память/кэш + MCP; без multi-agent LangGraph) |
-| **Статус** | active |
+| **Статус** | inactive — рантайм остановлен для экономии ресурсов; воскрешение по [docs/RUNBOOK.md](docs/RUNBOOK.md) |
 | **Ценность** | Ответы по вашим документам с источниками, админка и observability в одном Compose |
-| **Актуализация README** | 2026-08-06 · см. [историю коммитов](https://github.com/kartuznik/smartass/commits/main) |
+| **Актуализация README** | 2026-08-07 · см. [историю коммитов](https://github.com/kartuznik/smartass/commits/main) |
 
 Операции (deploy, backup/restore, ротация ключей, инциденты, rollback): [docs/RUNBOOK.md](docs/RUNBOOK.md).
 
